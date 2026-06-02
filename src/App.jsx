@@ -551,8 +551,8 @@ const RegisterScreen = ({ onBack }) => {
      par tes vraies valeurs depuis supabase.com > Settings > API
      et crée un bucket "vtc-documents" en mode privé.
   ────────────────────────────────────────────────────────── */
-  const SUPABASE_URL      = "https://VOTRE-PROJET.supabase.co";
-  const SUPABASE_ANON_KEY = "VOTRE-ANON-KEY";
+  const SUPABASE_URL      = "https://oiksltqjynwfxvvldflt.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
 
   const uploadFile = async (file, path) => {
     const res = await fetch(`${SUPABASE_URL}/storage/v1/object/vtc-documents/${path}`, {
@@ -586,16 +586,52 @@ const RegisterScreen = ({ onBack }) => {
     setUploadErr("");
     try {
       const ts   = Date.now();
-      const slug = `${form.lastName}-${form.firstName}-${ts}`.toLowerCase().replace(/\s/g,"-");
-      // Upload real vers Supabase si les clés sont configurées
-      if (!SUPABASE_URL.includes("VOTRE")) {
-        await uploadFile(vtcFile, `${slug}/carte-vtc.${vtcFile.name.split(".").pop()}`);
-        if (licFile) await uploadFile(licFile, `${slug}/permis.${licFile.name.split(".").pop()}`);
+      const slug = `${form.lastName}-${form.firstName}-${ts}`.toLowerCase().replace(/\s+/g,"-");
+
+      // 1. Upload carte VTC
+      const vtcPath = `${slug}/carte-vtc.${vtcFile.name.split(".").pop()}`;
+      const vtcUrl  = await uploadFile(vtcFile, vtcPath);
+
+      // 2. Upload permis (optionnel)
+      let licUrl = null;
+      if (licFile) {
+        const licPath = `${slug}/permis.${licFile.name.split(".").pop()}`;
+        licUrl = await uploadFile(licFile, licPath);
       }
-      // Simulation si Supabase pas encore configuré
-      await new Promise(r => setTimeout(r, 1200));
+
+      // 3. Enregistrer l'inscription dans la table Supabase
+      const payload = {
+        nom:        form.lastName,
+        prenom:     form.firstName,
+        email:      form.email,
+        telephone:  form.phone,
+        vehicule:   form.vehicle,
+        plaque:     form.plate,
+        permis:     form.license,
+        permis_exp: form.licenseExp,
+        vtc_url:    vtcUrl,
+        statut:     "en_attente",
+      };
+
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/CL%20identification`, {
+        method: "POST",
+        headers: {
+          "apikey":       SUPABASE_ANON_KEY,
+          "Authorization":`Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+          "Prefer":       "return=minimal",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err);
+      }
+
       setDone(true);
     } catch(e) {
+      console.error(e);
       setUploadErr("Erreur lors de l'envoi. Vérifiez votre connexion et réessayez.");
     }
     setUploading(false);
