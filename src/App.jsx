@@ -555,17 +555,24 @@ const RegisterScreen = ({ onBack }) => {
   const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
 
   const uploadFile = async (file, path) => {
-    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/vtc-documents/${path}`, {
+    const encodedPath = path.split("/").map(encodeURIComponent).join("/");
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/vtc-documents/${encodedPath}`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        "Content-Type": file.type,
-        "x-upsert": "true",
+        "apikey":         SUPABASE_ANON_KEY,
+        "Content-Type":   file.type,
+        "x-upsert":       "true",
+        "Cache-Control":  "3600",
       },
       body: file,
     });
-    if (!res.ok) throw new Error("Échec de l'upload");
-    return `${SUPABASE_URL}/storage/v1/object/public/vtc-documents/${path}`;
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Upload error:", res.status, errText);
+      throw new Error(`Upload échoué : ${res.status}`);
+    }
+    return `${SUPABASE_URL}/storage/v1/object/public/vtc-documents/${encodedPath}`;
   };
 
   const handleFileSelect = (e, type) => {
