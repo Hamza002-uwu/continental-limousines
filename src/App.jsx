@@ -934,7 +934,7 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
         },
         body: JSON.stringify({
           from:    "Continental Limousines <onboarding@resend.dev>",
-          to:      [chauffeur.email],
+          to:      ["hamza.oubakrim@etu.isae-ensma.fr"], // Email de test — remplacer par chauffeur.email une fois le domaine vérifié
           subject: "Votre dossier Continental Limousines a été approuvé",
           html: `
             <div style="background:#050505;color:#fff;font-family:Georgia,serif;padding:40px;max-width:520px;margin:0 auto;">
