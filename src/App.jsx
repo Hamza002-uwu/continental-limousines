@@ -907,23 +907,93 @@ const RegisterScreen = ({ onBack }) => {
 ═══════════════════════════════════════════════════════════ */
 /* ── DossiersView : validation des inscriptions chauffeurs ── */
 const DossiersView = ({ supabaseUrl, supabaseKey }) => {
-  const [dossiers, setDossiers]   = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [approved, setApproved]   = useState(null); // { email, password, nom }
+  const [dossiers, setDossiers]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [approved, setApproved]     = useState(null);
   const [processing, setProcessing] = useState(null);
+  const [emailStatus, setEmailStatus] = useState(null); // "sending" | "sent" | "error"
 
-  // Génère un mot de passe sécurisé
-  const genPassword = (prenom, nom) => {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-    const rand   = Array.from({length:6}, ()=>chars[Math.floor(Math.random()*chars.length)]).join("");
-    return `CL-${prenom.charAt(0).toUpperCase()}${nom.charAt(0).toUpperCase()}-${rand}!`;
-  };
+  const RESEND_KEY = "re_2fHpAuQA_EnB7XzjJ35BR6ntPjEABYcXi";
 
   // Génère l'email professionnel
   const genEmail = (prenom, nom) => {
     const p = prenom.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"-");
     const n = nom.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"-");
     return `${p.charAt(0)}.${n}@continental-limousines.fr`;
+  };
+
+  // Envoie l'email d'approbation via Resend
+  const sendApprovalEmail = async (chauffeur) => {
+    setEmailStatus("sending");
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${RESEND_KEY}`,
+          "Content-Type":  "application/json",
+        },
+        body: JSON.stringify({
+          from:    "Continental Limousines <onboarding@resend.dev>",
+          to:      [chauffeur.email],
+          subject: "Votre dossier Continental Limousines a été approuvé",
+          html: `
+            <div style="background:#050505;color:#fff;font-family:Georgia,serif;padding:40px;max-width:520px;margin:0 auto;">
+              <div style="text-align:center;margin-bottom:32px;">
+                <div style="font-size:64px;font-weight:700;color:#fff;letter-spacing:-3px;line-height:1;">CL</div>
+                <div style="font-size:11px;letter-spacing:0.2em;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-top:8px;">Continental Limousines</div>
+                <div style="width:60px;height:1px;background:linear-gradient(to right,transparent,#C9A84C,transparent);margin:14px auto 0;"></div>
+              </div>
+
+              <div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.3);border-radius:14px;padding:20px;text-align:center;margin-bottom:28px;">
+                <div style="font-size:28px;margin-bottom:8px;">✓</div>
+                <div style="font-size:18px;font-weight:700;color:#34D399;">Dossier approuvé</div>
+              </div>
+
+              <p style="color:rgba(255,255,255,0.8);line-height:1.9;font-size:14px;">
+                Bonjour <strong style="color:#fff;">${chauffeur.prenom} ${chauffeur.nom}</strong>,
+              </p>
+              <p style="color:rgba(255,255,255,0.7);line-height:1.9;font-size:14px;">
+                Nous avons le plaisir de vous confirmer que votre dossier d'inscription en tant que chauffeur <strong style="color:#C9A84C;">Continental Limousines</strong> a été examiné et approuvé par notre équipe.
+              </p>
+
+              <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:14px;padding:20px;margin:24px 0;">
+                <div style="font-size:10px;color:rgba(201,168,76,0.7);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:14px;">Vos informations</div>
+                <table style="width:100%;border-collapse:collapse;">
+                  <tr><td style="color:rgba(255,255,255,0.45);font-size:12px;padding:6px 0;width:40%;">Nom complet</td><td style="color:#fff;font-weight:700;font-size:13px;">${chauffeur.prenom} ${chauffeur.nom}</td></tr>
+                  <tr><td style="color:rgba(255,255,255,0.45);font-size:12px;padding:6px 0;">Véhicule</td><td style="color:#fff;font-weight:700;font-size:13px;">${chauffeur.vehicule}</td></tr>
+                  <tr><td style="color:rgba(255,255,255,0.45);font-size:12px;padding:6px 0;">Immatriculation</td><td style="color:#fff;font-weight:700;font-size:13px;">${chauffeur.plaque}</td></tr>
+                  <tr><td style="color:rgba(255,255,255,0.45);font-size:12px;padding:6px 0;">Email de connexion</td><td style="color:#C9A84C;font-weight:700;font-size:13px;">${chauffeur.email}</td></tr>
+                </table>
+              </div>
+
+              <p style="color:rgba(255,255,255,0.7);line-height:1.9;font-size:14px;">
+                Vous pouvez dès maintenant vous connecter à l'application avec votre email et le mot de passe que vous avez choisi lors de votre inscription.
+              </p>
+
+              <div style="text-align:center;margin:32px 0;">
+                <a href="https://continental-limousines.vercel.app"
+                  style="display:inline-block;background:linear-gradient(135deg,#8B6914,#C9A84C,#E8C96A);color:#080604;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:0.05em;">
+                  Accéder à l'application
+                </a>
+              </div>
+
+              <p style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;">
+                En cas de problème de connexion, contactez notre équipe à<br/>
+                <a href="mailto:dispatch@continental-limousines.fr" style="color:#C9A84C;">dispatch@continental-limousines.fr</a>
+              </p>
+
+              <div style="border-top:1px solid rgba(255,255,255,0.06);margin-top:28px;padding-top:20px;text-align:center;">
+                <div style="font-size:10px;color:rgba(255,255,255,0.25);letter-spacing:0.08em;">© Continental Limousines · Roissy CDG · Genève</div>
+              </div>
+            </div>
+          `,
+        }),
+      });
+      setEmailStatus(res.ok ? "sent" : "error");
+    } catch(e) {
+      console.error("Email error:", e);
+      setEmailStatus("error");
+    }
   };
 
   // Charge les dossiers depuis Supabase
@@ -961,10 +1031,12 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
   };
 
   const handleApprove = async (d) => {
-    const email    = genEmail(d.prenom, d.nom);
-    const password = genPassword(d.prenom, d.nom);
-    await updateStatut(d.id, "approuvé", { email_genere: email, mdp_genere: password });
-    setApproved({ email, password, nom: `${d.prenom} ${d.nom}` });
+    // 1. Met à jour le statut dans Supabase
+    await updateStatut(d.id, "approuvé");
+    // 2. Envoie l'email au chauffeur
+    await sendApprovalEmail(d);
+    // 3. Affiche la confirmation
+    setApproved({ email: d.email, nom: `${d.prenom} ${d.nom}`, prenom: d.prenom });
   };
 
   const handleRefuse = async (d) => {
@@ -988,26 +1060,63 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin:"0 auto 12px",display:"block" }}>
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
-          <div style={{ fontFamily:"Georgia,serif",fontSize:18,fontWeight:700,color:"#fff",marginBottom:4 }}>Chauffeur approuvé</div>
+          <div style={{ fontFamily:"Georgia,serif",fontSize:18,fontWeight:700,color:"#fff",marginBottom:4 }}>Dossier approuvé</div>
           <div style={{ fontSize:12,color:"rgba(255,255,255,0.4)" }}>{approved.nom}</div>
         </div>
 
-        <div style={{ background:`${G}08`,border:`1px solid ${G}25`,borderRadius:14,padding:"16px",marginBottom:16 }}>
-          <div style={{ fontSize:10,color:`${G}80`,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12,fontFamily:"Georgia,serif" }}>Identifiants à transmettre au chauffeur</div>
-          {[["Email",approved.email],["Mot de passe",approved.password]].map(([lbl,val])=>(
-            <div key={lbl} style={{ marginBottom:10 }}>
-              <div style={{ fontSize:9,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4 }}>{lbl}</div>
-              <div style={{ fontSize:13,fontWeight:700,color:"#fff",fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",padding:"10px 12px",borderRadius:10,letterSpacing:"0.02em",wordBreak:"break-all" }}>{val}</div>
+        {/* Statut email */}
+        <div style={{ padding:"14px 16px",borderRadius:14,marginBottom:16,
+          background: emailStatus==="sent" ? "rgba(52,211,153,0.08)" : emailStatus==="error" ? "rgba(248,113,113,0.08)" : "rgba(201,168,76,0.08)",
+          border: `1px solid ${emailStatus==="sent" ? "rgba(52,211,153,0.3)" : emailStatus==="error" ? "rgba(248,113,113,0.3)" : "rgba(201,168,76,0.25)"}`,
+        }}>
+          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+            {emailStatus==="sending" && (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation:"spin 1s linear infinite",flexShrink:0 }}>
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+              </svg>
+            )}
+            {emailStatus==="sent" && (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            )}
+            {emailStatus==="error" && (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            )}
+            <div>
+              <div style={{ fontSize:12,fontWeight:700,
+                color: emailStatus==="sent"?"#34D399":emailStatus==="error"?"#F87171":G,
+                fontFamily:"Georgia,serif"
+              }}>
+                {emailStatus==="sending" ? "Envoi de l'email…"
+                 :emailStatus==="sent"    ? "Email envoyé avec succès"
+                 :emailStatus==="error"   ? "Échec de l'envoi email"
+                 :"Email en préparation"}
+              </div>
+              <div style={{ fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:3 }}>{approved.email}</div>
             </div>
-          ))}
+          </div>
+        </div>
+
+        <div style={{ background:`${G}08`,border:`1px solid ${G}25`,borderRadius:14,padding:"16px",marginBottom:16 }}>
+          <div style={{ fontSize:10,color:`${G}80`,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8,fontFamily:"Georgia,serif" }}>Le chauffeur reçoit par email</div>
+          <div style={{ fontSize:12,color:"rgba(255,255,255,0.6)",lineHeight:1.7 }}>
+            — Confirmation d'approbation<br/>
+            — Ses informations (véhicule, plaque)<br/>
+            — Lien direct vers l'application<br/>
+            — Rappel de connexion avec son email
+          </div>
         </div>
 
         <div style={{ fontSize:11,color:"rgba(255,255,255,0.3)",marginBottom:16,lineHeight:1.7,textAlign:"center" }}>
-          Transmettez ces identifiants au chauffeur<br/>par SMS ou email. Le mot de passe est temporaire.
+          Le chauffeur peut se connecter avec<br/>son email et le mot de passe qu'il a choisi.
         </div>
 
-        <Btn onClick={()=>{ setApproved(null); }}>Fermer</Btn>
+        <Btn onClick={()=>{ setApproved(null); setEmailStatus(null); }}>Fermer</Btn>
       </div>
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 
