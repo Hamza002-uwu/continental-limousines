@@ -474,16 +474,51 @@ const LoginScreen = ({ onLogin, onRegister }) => {
   const [err, setErr]       = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handle = () => {
+  const SUPABASE_URL      = "https://oiksltqjynwfxvvldflt.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
+
+  const handle = async () => {
     setErr("");
     if (!email||!pw) { setErr("Veuillez remplir tous les champs."); return; }
     setLoading(true);
-    setTimeout(()=>{
-      const acc = ACCOUNTS.find(a=>a.email.toLowerCase()===email.toLowerCase()&&a.password===pw);
-      if (acc) { requestNotifPermission(); onLogin(acc); }
-      else setErr("Identifiants incorrects. Vérifiez votre email et mot de passe.");
-      setLoading(false);
-    }, 800);
+
+    // 1. Vérifie d'abord dans les comptes fixes (admin, dispatch, clients)
+    const acc = ACCOUNTS.find(a=>a.email.toLowerCase()===email.toLowerCase()&&a.password===pw);
+    if (acc) { requestNotifPermission(); onLogin(acc); setLoading(false); return; }
+
+    // 2. Vérifie dans Supabase pour les chauffeurs inscrits
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/CL%20identification?email=eq.${encodeURIComponent(email.toLowerCase())}&select=*`,
+        { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.length > 0) {
+          const chauffeur = data[0];
+          // Vérifie le mot de passe
+          if (chauffeur.mot_de_passe === pw) {
+            requestNotifPermission();
+            onLogin({
+              id:       `d-${chauffeur.id}`,
+              email:    chauffeur.email,
+              role:     "driver",
+              name:     `${chauffeur.prenom} ${chauffeur.nom}`,
+              avatar:   `${chauffeur.prenom?.charAt(0)||"?"}${chauffeur.nom?.charAt(0)||"?"}`.toUpperCase(),
+              driverId: chauffeur.id,
+              vehicle:  chauffeur.vehicule,
+              plate:    chauffeur.plaque,
+              statut:   chauffeur.statut,
+            });
+            setLoading(false);
+            return;
+          }
+        }
+      }
+    } catch(e) { console.error(e); }
+
+    setErr("Identifiants incorrects. Vérifiez votre email et mot de passe.");
+    setLoading(false);
   };
 
   return (
@@ -535,14 +570,15 @@ const LoginScreen = ({ onLogin, onRegister }) => {
 ═══════════════════════════════════════════════════════════ */
 const RegisterScreen = ({ onBack }) => {
   const [step, setStep] = useState(1);
-  const [done, setDone]         = useState(false);
+  const [done, setDone]           = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState("");
-  const [vtcFile, setVtcFile]   = useState(null);
+  const [vtcFile, setVtcFile]     = useState(null);
   const [vtcPreview, setVtcPreview] = useState(null);
-  const [licFile, setLicFile]   = useState(null);
+  const [licFile, setLicFile]     = useState(null);
   const [licPreview, setLicPreview] = useState(null);
-  const [form, setForm] = useState({ firstName:"",lastName:"",phone:"",email:"",vehicle:"Class S",plate:"",license:"",licenseExp:"" });
+  const [showPw, setShowPw]       = useState(false);
+  const [form, setForm] = useState({ firstName:"",lastName:"",phone:"",email:"",password:"",confirmPassword:"",vehicle:"Class S",plate:"",license:"",licenseExp:"" });
   const f = k => e => setForm(p=>({...p,[k]:e.target.value}));
   const steps = [{label:"Identité",num:1},{label:"Véhicule",num:2},{label:"Documents",num:3}];
 
@@ -608,16 +644,17 @@ const RegisterScreen = ({ onBack }) => {
 
       // 3. Enregistrer l'inscription dans la table Supabase
       const payload = {
-        nom:        form.lastName,
-        prenom:     form.firstName,
-        email:      form.email,
-        telephone:  form.phone,
-        vehicule:   form.vehicle,
-        plaque:     form.plate,
-        permis:     form.license,
-        permis_exp: form.licenseExp,
-        vtc_url:    vtcUrl,
-        statut:     "en_attente",
+        nom:          form.lastName,
+        prenom:       form.firstName,
+        email:        form.email.toLowerCase(),
+        mot_de_passe: form.password,
+        telephone:    form.phone,
+        vehicule:     form.vehicle,
+        plaque:       form.plate,
+        permis:       form.license,
+        permis_exp:   form.licenseExp,
+        vtc_url:      vtcUrl,
+        statut:       "en_attente",
       };
 
       const res = await fetch(`${SUPABASE_URL}/rest/v1/CL%20identification`, {
@@ -734,8 +771,61 @@ const RegisterScreen = ({ onBack }) => {
             <Inp label="Nom" placeholder="Dupont" value={form.lastName} onChange={f("lastName")}/>
           </div>
           <Inp label="Téléphone" type="tel" placeholder="+33 6 xx xx xx xx" value={form.phone} onChange={f("phone")}/>
-          <Inp label="Email" type="email" placeholder="chauffeur@email.com" value={form.email} onChange={f("email")}/>
-          <Btn onClick={()=>setStep(2)}>Continuer</Btn>
+          <Inp label="Email (sera votre identifiant)" type="email" placeholder="votre@email.com" value={form.email} onChange={f("email")}/>
+
+          {/* Mot de passe */}
+          <div style={{ marginBottom:12 }}>
+            <div style={{ fontSize:9, color:`${G}90`, marginBottom:5, textTransform:"uppercase", letterSpacing:"0.12em", fontFamily:"Georgia,serif" }}>Mot de passe</div>
+            <div style={{ position:"relative" }}>
+              <input
+                type={showPw?"text":"password"}
+                placeholder="Choisissez un mot de passe"
+                value={form.password}
+                onChange={f("password")}
+                style={{ width:"100%", padding:"11px 44px 11px 14px", background:"rgba(255,255,255,0.04)", border:`1px solid ${form.password&&form.password.length<6?"#F87171":"rgba(255,255,255,0.1)"}`, borderRadius:12, color:"#fff", fontSize:14, boxSizing:"border-box", outline:"none", fontFamily:"Georgia,serif" }}
+              />
+              <button onClick={()=>setShowPw(!showPw)} style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:14 }}>
+                {showPw?"🙈":"👁"}
+              </button>
+            </div>
+            {form.password && form.password.length < 6 && <div style={{ fontSize:11,color:"#F87171",marginTop:4 }}>Minimum 6 caractères</div>}
+          </div>
+
+          <Inp
+            label="Confirmer le mot de passe"
+            type="password"
+            placeholder="Répétez le mot de passe"
+            value={form.confirmPassword}
+            onChange={f("confirmPassword")}
+            error={form.confirmPassword && form.password !== form.confirmPassword ? "Les mots de passe ne correspondent pas" : ""}
+          />
+
+          {/* Indicateur force mot de passe */}
+          {form.password && (
+            <div style={{ marginBottom:14 }}>
+              <div style={{ display:"flex", gap:4, marginBottom:4 }}>
+                {[1,2,3,4].map(i => {
+                  const strength = form.password.length >= 8 ? (
+                    /[A-Z]/.test(form.password) ? (/[0-9]/.test(form.password) ? (/[^A-Za-z0-9]/.test(form.password) ? 4 : 3) : 2) : 2
+                  ) : form.password.length >= 6 ? 1 : 0;
+                  return <div key={i} style={{ flex:1, height:3, borderRadius:2, background: i<=strength ? (strength<=1?"#F87171":strength<=2?"#F59E0B":strength<=3?"#60A5FA":"#34D399") : "rgba(255,255,255,0.08)", transition:"all .3s" }}/>;
+                })}
+              </div>
+              <div style={{ fontSize:9, color:"rgba(255,255,255,0.35)", textTransform:"uppercase", letterSpacing:"0.06em" }}>
+                {form.password.length<6?"Trop court":form.password.length<8?"Faible":!/[A-Z]/.test(form.password)?"Moyen":!/[0-9]/.test(form.password)?"Bon":"Fort"}
+              </div>
+            </div>
+          )}
+
+          <Btn
+            onClick={()=>{
+              if (!form.firstName||!form.lastName||!form.email||!form.phone) { setUploadErr("Veuillez remplir tous les champs."); return; }
+              if (form.password.length < 6) { setUploadErr("Le mot de passe doit faire au moins 6 caractères."); return; }
+              if (form.password !== form.confirmPassword) { setUploadErr("Les mots de passe ne correspondent pas."); return; }
+              setUploadErr(""); setStep(2);
+            }}
+          >Continuer</Btn>
+          {uploadErr && <div style={{ display:"flex",gap:8,padding:"10px 14px",background:"rgba(248,113,113,0.08)",border:"1px solid rgba(248,113,113,0.25)",borderRadius:12,marginTop:10 }}><span style={{ fontSize:12,color:"#F87171" }}>{uploadErr}</span></div>}
         </>}
 
         {step===2&&<>
@@ -815,6 +905,214 @@ const RegisterScreen = ({ onBack }) => {
 /* ═══════════════════════════════════════════════════════════
    VUE ADMIN
 ═══════════════════════════════════════════════════════════ */
+/* ── DossiersView : validation des inscriptions chauffeurs ── */
+const DossiersView = ({ supabaseUrl, supabaseKey }) => {
+  const [dossiers, setDossiers]   = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [approved, setApproved]   = useState(null); // { email, password, nom }
+  const [processing, setProcessing] = useState(null);
+
+  // Génère un mot de passe sécurisé
+  const genPassword = (prenom, nom) => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    const rand   = Array.from({length:6}, ()=>chars[Math.floor(Math.random()*chars.length)]).join("");
+    return `CL-${prenom.charAt(0).toUpperCase()}${nom.charAt(0).toUpperCase()}-${rand}!`;
+  };
+
+  // Génère l'email professionnel
+  const genEmail = (prenom, nom) => {
+    const p = prenom.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"-");
+    const n = nom.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"-");
+    return `${p.charAt(0)}.${n}@continental-limousines.fr`;
+  };
+
+  // Charge les dossiers depuis Supabase
+  const loadDossiers = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${supabaseUrl}/rest/v1/CL%20identification?order=created_at.desc`, {
+        headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` }
+      });
+      if (res.ok) { const data = await res.json(); setDossiers(data); }
+    } catch(e) { console.error(e); }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadDossiers(); }, []);
+
+  // Met à jour le statut dans Supabase
+  const updateStatut = async (id, statut, extraData={}) => {
+    setProcessing(id);
+    try {
+      const body = { statut, ...extraData };
+      await fetch(`${supabaseUrl}/rest/v1/CL%20identification?id=eq.${id}`, {
+        method: "PATCH",
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
+          "Content-Type":  "application/json",
+          "Prefer":        "return=minimal",
+        },
+        body: JSON.stringify(body),
+      });
+      await loadDossiers();
+    } catch(e) { console.error(e); }
+    setProcessing(null);
+  };
+
+  const handleApprove = async (d) => {
+    const email    = genEmail(d.prenom, d.nom);
+    const password = genPassword(d.prenom, d.nom);
+    await updateStatut(d.id, "approuvé", { email_genere: email, mdp_genere: password });
+    setApproved({ email, password, nom: `${d.prenom} ${d.nom}` });
+  };
+
+  const handleRefuse = async (d) => {
+    await updateStatut(d.id, "refusé");
+  };
+
+  const StatusBadgeDossier = ({ s }) => {
+    const cfg = {
+      "en_attente": { color:"#C9A84C", bg:"rgba(201,168,76,0.12)", label:"En attente" },
+      "approuvé":   { color:"#34D399", bg:"rgba(52,211,153,0.12)",  label:"Approuvé"  },
+      "refusé":     { color:"#F87171", bg:"rgba(248,113,113,0.12)", label:"Refusé"    },
+    }[s] || { color:"#888", bg:"rgba(128,128,128,0.1)", label:s };
+    return <span style={{ fontSize:9,fontWeight:700,letterSpacing:"0.1em",padding:"3px 9px",borderRadius:20,color:cfg.color,background:cfg.bg,border:`1px solid ${cfg.color}35`,textTransform:"uppercase",fontFamily:"Georgia,serif" }}>{cfg.label}</span>;
+  };
+
+  // Modal identifiants générés
+  if (approved) return (
+    <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:20 }}>
+      <div style={{ background:"#0e0e0e",border:`1px solid ${G}40`,borderRadius:20,padding:"28px 24px",maxWidth:380,width:"100%" }}>
+        <div style={{ textAlign:"center",marginBottom:20 }}>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin:"0 auto 12px",display:"block" }}>
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <div style={{ fontFamily:"Georgia,serif",fontSize:18,fontWeight:700,color:"#fff",marginBottom:4 }}>Chauffeur approuvé</div>
+          <div style={{ fontSize:12,color:"rgba(255,255,255,0.4)" }}>{approved.nom}</div>
+        </div>
+
+        <div style={{ background:`${G}08`,border:`1px solid ${G}25`,borderRadius:14,padding:"16px",marginBottom:16 }}>
+          <div style={{ fontSize:10,color:`${G}80`,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12,fontFamily:"Georgia,serif" }}>Identifiants à transmettre au chauffeur</div>
+          {[["Email",approved.email],["Mot de passe",approved.password]].map(([lbl,val])=>(
+            <div key={lbl} style={{ marginBottom:10 }}>
+              <div style={{ fontSize:9,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4 }}>{lbl}</div>
+              <div style={{ fontSize:13,fontWeight:700,color:"#fff",fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",padding:"10px 12px",borderRadius:10,letterSpacing:"0.02em",wordBreak:"break-all" }}>{val}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ fontSize:11,color:"rgba(255,255,255,0.3)",marginBottom:16,lineHeight:1.7,textAlign:"center" }}>
+          Transmettez ces identifiants au chauffeur<br/>par SMS ou email. Le mot de passe est temporaire.
+        </div>
+
+        <Btn onClick={()=>{ setApproved(null); }}>Fermer</Btn>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
+        <SecTitle sub={`${dossiers.filter(d=>d.statut==="en_attente").length} en attente de validation`}>Dossiers chauffeurs</SecTitle>
+        <button onClick={loadDossiers} style={{ background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"6px 12px",color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif" }}>
+          Actualiser
+        </button>
+      </div>
+
+      {loading && <div style={{ textAlign:"center",color:"rgba(255,255,255,0.2)",padding:"40px 0",fontFamily:"Georgia,serif" }}>Chargement…</div>}
+
+      {!loading && dossiers.length===0 && (
+        <div style={{ textAlign:"center",color:"rgba(255,255,255,0.2)",padding:"40px 0",fontFamily:"Georgia,serif" }}>
+          <div style={{ fontSize:32,marginBottom:12,opacity:.3 }}>◆</div>
+          <div>Aucune inscription reçue pour l'instant</div>
+        </div>
+      )}
+
+      {dossiers.map(d=>(
+        <Card key={d.id} glow={d.statut==="en_attente"}>
+          {/* Header */}
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10 }}>
+            <div style={{ display:"flex",gap:10,alignItems:"center" }}>
+              <Av txt={`${(d.prenom||"?").charAt(0)}${(d.nom||"?").charAt(0)}`} size={40}/>
+              <div>
+                <div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:15,color:"#fff" }}>{d.prenom} {d.nom}</div>
+                <div style={{ fontSize:11,color:`${G}80`,marginTop:2 }}>{d.vehicule} · {d.plaque}</div>
+              </div>
+            </div>
+            <StatusBadgeDossier s={d.statut}/>
+          </div>
+
+          <Divider/>
+
+          {/* Infos */}
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12 }}>
+            {[
+              ["Téléphone", d.telephone||"—"],
+              ["Email",     d.email||"—"],
+              ["Permis",    d.permis||"—"],
+              ["Expiration",d.permis_exp||"—"],
+            ].map(([k,v])=>(
+              <div key={k} style={{ background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"8px 10px" }}>
+                <div style={{ fontSize:9,color:`${G}60`,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3,fontFamily:"Georgia,serif" }}>{k}</div>
+                <div style={{ fontSize:12,color:"#fff",fontWeight:600,wordBreak:"break-all" }}>{v}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Document VTC */}
+          {d.vtc_url && (
+            <a href={d.vtc_url} target="_blank" rel="noreferrer"
+              style={{ display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:`${G}08`,border:`1px solid ${G}25`,borderRadius:12,marginBottom:12,textDecoration:"none" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:12,fontWeight:700,color:G,fontFamily:"Georgia,serif" }}>Carte professionnelle VTC</div>
+                <div style={{ fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:1 }}>Appuyer pour ouvrir le document</div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </a>
+          )}
+
+          {/* Identifiants générés si déjà approuvé */}
+          {d.statut==="approuvé" && d.email_genere && (
+            <div style={{ padding:"10px 12px",background:"rgba(52,211,153,0.06)",border:"1px solid rgba(52,211,153,0.2)",borderRadius:12,marginBottom:12 }}>
+              <div style={{ fontSize:9,color:"#34D399",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6,fontFamily:"Georgia,serif" }}>Identifiants transmis</div>
+              <div style={{ fontSize:11,color:"rgba(255,255,255,0.6)" }}>{d.email_genere}</div>
+              <div style={{ fontSize:11,color:"rgba(255,255,255,0.6)",marginTop:2 }}>{d.mdp_genere}</div>
+            </div>
+          )}
+
+          {/* Boutons action */}
+          {d.statut==="en_attente" && (
+            <div style={{ display:"flex",gap:10 }}>
+              <Btn
+                onClick={()=>handleApprove(d)}
+                disabled={processing===d.id}
+                v="success"
+                style={{ flex:1 }}
+              >
+                {processing===d.id ? "Traitement…" : "Approuver"}
+              </Btn>
+              <Btn
+                onClick={()=>handleRefuse(d)}
+                disabled={processing===d.id}
+                v="danger"
+                style={{ flex:1 }}
+              >
+                Refuser
+              </Btn>
+            </div>
+          )}
+        </Card>
+      ))}
+    </div>
+  );
+};
+
 const AdminView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, tab }) => {
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter]     = useState("all");
@@ -822,9 +1120,13 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
   const [form, setForm]         = useState({ title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",distance:"",notes:"" });
   const g = k=>e=>setForm(p=>({...p,[k]:e.target.value}));
 
-  if (tab==="map")   return <div><SecTitle icon="Carte" sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
-  if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages}/>;
-  if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
+  const SUPABASE_URL      = "https://oiksltqjynwfxvvldflt.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
+
+  if (tab==="map")      return <div><SecTitle icon="Carte" sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
+  if (tab==="chat")     return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages}/>;
+  if (tab==="stats")    return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
+  if (tab==="dossiers") return <DossiersView supabaseUrl={SUPABASE_URL} supabaseKey={SUPABASE_ANON_KEY}/>;
 
   const filtered = missions.filter(m=>filter==="all"||m.status===filter).filter(m=>!search||(m.title+m.client).toLowerCase().includes(search.toLowerCase()));
   const create = () => {
@@ -932,7 +1234,21 @@ const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages,
    VUE CHAUFFEUR
 ═══════════════════════════════════════════════════════════ */
 const DriverView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, setToast, tab }) => {
-  const driver = drivers.find(d=>d.id===currentUser.driverId)||drivers[0];
+  // Chauffeur depuis la liste fixe OU depuis Supabase (inscription)
+  const driver = drivers.find(d=>d.id===currentUser.driverId) || {
+    id:        currentUser.driverId,
+    name:      currentUser.name,
+    avatar:    currentUser.avatar,
+    vehicle:   currentUser.vehicle || "Class S",
+    plate:     currentUser.plate   || "—",
+    license:   "—",
+    licenseExp:"—",
+    phone:     "—",
+    status:    "available",
+    rating:    5.0,
+    trips:     0,
+    earnings:  0,
+  };
   const myMissions = missions.filter(m=>m.driverId===driver.id);
   const available  = missions.filter(m=>m.status==="pending"&&m.vehicle===driver.vehicle);
   const active     = myMissions.filter(m=>["accepted","assigned"].includes(m.status));
@@ -1016,7 +1332,7 @@ const ClientView = ({ missions, drivers, currentUser, tab }) => {
    NAVIGATION PAR RÔLE
 ═══════════════════════════════════════════════════════════ */
 const NAV = {
-  admin:      [{id:"missions",icon:"◆",label:"Missions"},{id:"map",icon:"Carte",label:"Carte"},{id:"chat",icon:"Chat",label:"Chat"},{id:"stats",icon:"Stats",label:"Stats"}],
+  admin:      [{id:"missions",icon:"◆",label:"Missions"},{id:"dossiers",icon:"◈",label:"Dossiers"},{id:"map",icon:"Carte",label:"Carte"},{id:"chat",icon:"Chat",label:"Chat"},{id:"stats",icon:"Stats",label:"Stats"}],
   dispatcher: [{id:"dispatch",icon:"◈",label:"Dispatch"},{id:"fleet",icon:"▲",label:"Flotte"},{id:"map",icon:"Carte",label:"Carte"},{id:"chat",icon:"Chat",label:"Chat"},{id:"stats",icon:"Stats",label:"Stats"}],
   driver:     [{id:"missions",icon:"◆",label:"Missions"},{id:"map",icon:"Carte",label:"Carte"},{id:"chat",icon:"Chat",label:"Chat"},{id:"stats",icon:"Stats",label:"Stats"},{id:"profile",icon:"●",label:"Profil"}],
   client:     [{id:"rides",icon:"★",label:"Courses"},{id:"map",icon:"Carte",label:"Ma course"},{id:"vehicles",icon:"▲",label:"Véhicules"}],
@@ -1128,4 +1444,3 @@ export default function App() {
     </div>
   );
 }
-
