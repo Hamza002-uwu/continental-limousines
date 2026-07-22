@@ -496,8 +496,29 @@ const LoginScreen = ({ onLogin, onRegister }) => {
         const data = await res.json();
         if (data.length > 0) {
           const chauffeur = data[0];
+
           // Vérifie le mot de passe
-          if (chauffeur.mot_de_passe === pw) {
+          if (chauffeur.mot_de_passe !== pw) {
+            setErr("Identifiants incorrects. Vérifiez votre email et mot de passe.");
+            setLoading(false);
+            return;
+          }
+
+          // Vérifie le statut du dossier
+          if (chauffeur.statut === "en_attente") {
+            setErr("Votre dossier est en cours de vérification. Vous recevrez un email dès qu'il sera approuvé.");
+            setLoading(false);
+            return;
+          }
+
+          if (chauffeur.statut === "refusé") {
+            setErr("Votre dossier a été refusé. Contactez Continental Limousines pour plus d'informations.");
+            setLoading(false);
+            return;
+          }
+
+          // Statut approuvé → connexion autorisée
+          if (chauffeur.statut === "approuvé") {
             requestNotifPermission();
             onLogin({
               id:       `d-${chauffeur.id}`,
