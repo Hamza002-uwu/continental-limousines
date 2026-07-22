@@ -1021,7 +1021,7 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
   const loadDossiers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${supabaseUrl}/rest/v1/chauffeurs?order=created_at.desc`, {
+      const res = await fetch(`${supabaseUrl}/rest/v1/chauffeurs?select=*`, {
         headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` }
       });
       if (res.ok) { const data = await res.json(); setDossiers(data); }
