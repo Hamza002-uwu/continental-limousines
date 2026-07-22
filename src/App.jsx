@@ -489,7 +489,7 @@ const LoginScreen = ({ onLogin, onRegister }) => {
     // 2. Vérifie dans Supabase pour les chauffeurs inscrits
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/CL%20identification?email=eq.${encodeURIComponent(email.toLowerCase())}&select=*`,
+        `${SUPABASE_URL}/rest/v1/chauffeurs?email=eq.${encodeURIComponent(email.toLowerCase())}&select=*`,
         { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
       );
       if (res.ok) {
@@ -678,7 +678,7 @@ const RegisterScreen = ({ onBack }) => {
         statut:       "en_attente",
       };
 
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/CL%20identification`, {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/chauffeurs`, {
         method: "POST",
         headers: {
           "apikey":       SUPABASE_ANON_KEY,
@@ -1021,7 +1021,7 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
   const loadDossiers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${supabaseUrl}/rest/v1/CL%20identification?order=created_at.desc`, {
+      const res = await fetch(`${supabaseUrl}/rest/v1/chauffeurs?order=created_at.desc`, {
         headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` }
       });
       if (res.ok) { const data = await res.json(); setDossiers(data); }
@@ -1036,7 +1036,7 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
     setProcessing(id);
     try {
       const body = { statut, ...extraData };
-      await fetch(`${supabaseUrl}/rest/v1/CL%20identification?id=eq.${id}`, {
+      await fetch(`${supabaseUrl}/rest/v1/chauffeurs?id=eq.${id}`, {
         method: "PATCH",
         headers: {
           "apikey": supabaseKey,
