@@ -1034,24 +1034,23 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
   // Met à jour le statut dans Supabase
   const SUPABASE_SERVICE_KEY = "sb_secret_JZKhfoerRt5k-LPCsi2PAg_lA-GC2z3";
 
-  const updateStatut = async (email, statut, extraData={}) => {
+  const updateStatut = async (email, statut) => {
     setProcessing(email);
     try {
-      const body = { statut, ...extraData };
-      const res = await fetch(`${supabaseUrl}/rest/v1/chauffeurs?email=eq.${email}`, {
-        method: "PATCH",
+      const fnName = statut === "approuvé" ? "approve_chauffeur" : "refuse_chauffeur";
+      const res = await fetch(`${supabaseUrl}/rest/v1/rpc/${fnName}`, {
+        method: "POST",
         headers: {
-          "apikey":        SUPABASE_SERVICE_KEY,
-          "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
+          "apikey":        supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
           "Content-Type":  "application/json",
-          "Prefer":        "return=representation",
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ chauffeur_email: email }),
       });
       const text = await res.text();
-      console.log("PATCH result:", res.status, text);
+      console.log("RPC result:", res.status, text);
       await loadDossiers();
-    } catch(e) { console.error("PATCH exception:", e); }
+    } catch(e) { console.error("RPC exception:", e); }
     setProcessing(null);
   };
 
