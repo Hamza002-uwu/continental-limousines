@@ -34,10 +34,10 @@ const VEHICLES = [
 ];
 
 const INIT_DRIVERS = [
-  { id:1, name:"Karim Benali",   phone:"+33 6 12 34 56 78", vehicle:"Class S", plate:"AB-123-CD", license:"PRO-B123456", licenseExp:"2028-03-15", avatar:"KB", status:"available", rating:4.9, trips:142, earnings:18650, joined:"2022-01-10", lat:48.8566, lng:2.3522 },
-  { id:2, name:"Sofiane Merabt", phone:"+33 6 98 76 54 32", vehicle:"Class E", plate:"EF-456-GH", license:"PRO-C789012", licenseExp:"2027-09-20", avatar:"SM", status:"available", rating:4.7, trips:98,  earnings:12400, joined:"2022-06-05", lat:48.8606, lng:2.3376 },
-  { id:3, name:"Youssef Haddad", phone:"+33 6 55 44 33 22", vehicle:"Class V", plate:"IJ-789-KL", license:"PRO-D345678", licenseExp:"2026-11-30", avatar:"YH", status:"busy",      rating:4.8, trips:207, earnings:29800, joined:"2021-08-18", lat:48.8738, lng:2.2950 },
-  { id:4, name:"Mehdi Tahar",    phone:"+33 6 11 22 33 44", vehicle:"Maybach", plate:"MN-012-OP", license:"PRO-E901234", licenseExp:"2029-05-01", avatar:"MT", status:"available", rating:5.0, trips:315, earnings:52100, joined:"2020-03-01", lat:48.8700, lng:2.3100 },
+  { id:1, name:"Karim Benali",   phone:"+33 6 12 34 56 78", vehicle:"Class S", plate:"AB-123-CD", license:"PRO-B123456", licenseExp:"2028-03-15", avatar:"KB", status:"available", rating:4.9, trips:142, earnings:18650, joined:"2022-01-10", lat:49.0097, lng:2.5479 },
+  { id:2, name:"Sofiane Merabt", phone:"+33 6 98 76 54 32", vehicle:"Class E", plate:"EF-456-GH", license:"PRO-C789012", licenseExp:"2027-09-20", avatar:"SM", status:"available", rating:4.7, trips:98,  earnings:12400, joined:"2022-06-05", lat:48.8698, lng:2.3078 },
+  { id:3, name:"Youssef Haddad", phone:"+33 6 55 44 33 22", vehicle:"Class V", plate:"IJ-789-KL", license:"PRO-D345678", licenseExp:"2026-11-30", avatar:"YH", status:"busy",      rating:4.8, trips:207, earnings:29800, joined:"2021-08-18", lat:48.7262, lng:2.3652 },
+  { id:4, name:"Mehdi Tahar",    phone:"+33 6 11 22 33 44", vehicle:"Maybach", plate:"MN-012-OP", license:"PRO-E901234", licenseExp:"2029-05-01", avatar:"MT", status:"available", rating:5.0, trips:315, earnings:52100, joined:"2020-03-01", lat:48.9243, lng:2.3601 },
 ];
 
 const INIT_MISSIONS = [
@@ -1253,7 +1253,7 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
   const SUPABASE_URL      = "https://oiksltqjynwfxvvldflt.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
 
-  if (tab==="map")      return <div><SecTitle icon="Carte" sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
+  if (tab==="map")      return <div><SecTitle sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
   if (tab==="chat")     return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages}/>;
   if (tab==="stats")    return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
   if (tab==="dossiers") return <DossiersView supabaseUrl={SUPABASE_URL} supabaseKey={SUPABASE_ANON_KEY}/>;
@@ -1318,7 +1318,7 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
    VUE DISPATCHER
 ═══════════════════════════════════════════════════════════ */
 const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, setToast, tab }) => {
-  if (tab==="map")   return <div><SecTitle icon="Carte" sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
+  if (tab==="map")   return <div><SecTitle sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
   if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages}/>;
   if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
 
@@ -1390,7 +1390,7 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, cur
   if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
 
   if (tab==="map") return <div>
-    <SecTitle icon="Carte" sub="Ma position & trajet">Carte GPS</SecTitle>
+    <SecTitle sub="Ma position & trajet">Carte GPS</SecTitle>
     <MapView mission={active[0]} drivers={drivers} standalone/>
     {active.length>0&&<Card glow style={{ marginTop:14 }}><div style={{ fontSize:13,fontWeight:700,color:"#fff",fontFamily:"Georgia,serif",marginBottom:6 }}>{active[0].title}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)" }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{active[0].pickup}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)",marginTop:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{active[0].dropoff}</div></Card>}
   </div>;
@@ -1428,7 +1428,80 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, cur
 
     {available.length===0&&myMissions.length===0&&<div style={{ textAlign:"center",padding:"50px 20px",color:"rgba(255,255,255,0.2)",fontFamily:"Georgia,serif" }}><div style={{ fontSize:36,marginBottom:12,opacity:.3 }}>◆</div><div style={{ fontSize:14,marginBottom:8 }}>Aucune mission disponible</div><div style={{ fontSize:12 }}>Vous serez alerté dès qu'une mission {driver.vehicle} est publiée</div></div>}
 
-    {active.length>0&&<><SecTitle icon="◆">Missions actives</SecTitle>{active.map(m=><Card key={m.id}><div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6 }}><div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:13,color:"#fff",flex:1,marginRight:10 }}>{m.title}</div><Badge status={m.status}/></div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{m.pickup} → {m.dropoff}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.35)" }}>{m.date} · {m.time} · <span style={{ color:G }}>{m.price} €</span></div></Card>)}</>}
+    {active.length>0&&<>
+      <SecTitle icon="◆">Missions actives</SecTitle>
+      {active.map(m => {
+        // Encode l'adresse d'arrivée pour les liens GPS
+        const dest = encodeURIComponent(m.dropoff);
+        const origin = encodeURIComponent(m.pickup);
+        const gpsApps = [
+          {
+            name: "Google Maps",
+            icon: "G",
+            color: "#4285F4",
+            bg: "rgba(66,133,244,0.12)",
+            url: `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`,
+          },
+          {
+            name: "Waze",
+            icon: "W",
+            color: "#33CCFF",
+            bg: "rgba(51,204,255,0.12)",
+            url: `https://waze.com/ul?q=${dest}&navigate=yes`,
+          },
+          {
+            name: "Plans",
+            icon: "A",
+            color: "#34D399",
+            bg: "rgba(52,211,153,0.12)",
+            url: `http://maps.apple.com/?saddr=${origin}&daddr=${dest}&dirflg=d`,
+          },
+        ];
+        return (
+          <Card key={m.id} glow>
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8 }}>
+              <div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:14,color:"#fff",flex:1,marginRight:10 }}>{m.title}</div>
+              <Badge status={m.status}/>
+            </div>
+            {m.client&&<div style={{ fontSize:12,color:`${G}90`,marginBottom:8 }}>— {m.client}</div>}
+            <div style={{ fontSize:12,color:"rgba(255,255,255,0.5)",marginBottom:3 }}>
+              <span style={{ color:`${G}80`,fontWeight:600,marginRight:4 }}>Départ</span>{m.pickup}
+            </div>
+            <div style={{ fontSize:12,color:"rgba(255,255,255,0.5)",marginBottom:10 }}>
+              <span style={{ color:`${G}80`,fontWeight:600,marginRight:4 }}>Arrivée</span>{m.dropoff}
+            </div>
+            <div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:14 }}>
+              {m.date} · {m.time} · <span style={{ color:G,fontWeight:700 }}>{m.price} €</span>
+              {m.distance&&<span style={{ color:"rgba(255,255,255,0.35)",marginLeft:8 }}>{m.distance}</span>}
+            </div>
+            {m.notes&&<div style={{ fontSize:11,color:"rgba(255,255,255,0.3)",fontStyle:"italic",marginBottom:14,borderLeft:`2px solid ${G}30`,paddingLeft:10 }}>Note : {m.notes}</div>}
+
+            {/* Boutons GPS */}
+            <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:12,marginTop:4 }}>
+              <div style={{ fontSize:9,color:`${G}70`,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"Georgia,serif",marginBottom:10 }}>
+                Naviguer vers le client
+              </div>
+              <div style={{ display:"flex",gap:8 }}>
+                {gpsApps.map(app => (
+                  <a
+                    key={app.name}
+                    href={app.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"10px 8px",background:app.bg,border:`1px solid ${app.color}35`,borderRadius:12,textDecoration:"none",transition:"all .2s" }}
+                  >
+                    <div style={{ width:32,height:32,borderRadius:"50%",background:`${app.color}20`,border:`1.5px solid ${app.color}60`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:app.color,fontFamily:"Georgia,serif" }}>
+                      {app.icon}
+                    </div>
+                    <div style={{ fontSize:10,color:app.color,fontWeight:600,fontFamily:"Georgia,serif",letterSpacing:"0.03em" }}>{app.name}</div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </Card>
+        );
+      })}
+    </>}
 
     {myMissions.filter(m=>!["accepted","assigned"].includes(m.status)).length>0&&<><SecTitle icon="●">Historique</SecTitle>{myMissions.filter(m=>!["accepted","assigned"].includes(m.status)).map(m=><Card key={m.id}><div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}><div><div style={{ fontFamily:"Georgia,serif",fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.65)" }}>{m.title.split("–")[0].trim()}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:3 }}>{m.date} · <span style={{ color:`${G}80` }}>{m.price} €</span></div></div><Badge status={m.status}/></div></Card>)}</>}
     <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
@@ -1442,7 +1515,7 @@ const ClientView = ({ missions, drivers, currentUser, tab }) => {
   const myMissions = missions.filter(m=>m.clientId===currentUser.clientId);
   const activeM    = myMissions.find(m=>["accepted","assigned"].includes(m.status));
 
-  if (tab==="map") return <div><SecTitle icon="Carte" sub="Votre course en temps réel">Carte GPS</SecTitle><MapView mission={activeM} drivers={drivers} standalone/>{activeM?<Card glow style={{ marginTop:14 }}><div style={{ fontSize:13,fontWeight:700,color:"#fff",fontFamily:"Georgia,serif",marginBottom:6 }}>{activeM.title}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)" }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{activeM.pickup}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)",marginTop:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{activeM.dropoff}</div></Card>:<div style={{ textAlign:"center",padding:"30px 0",color:"rgba(255,255,255,0.2)",fontFamily:"Georgia,serif",fontSize:13 }}>Aucune course en cours</div>}</div>;
+  if (tab==="map") return <div><SecTitle sub="Votre course en temps réel">Carte GPS</SecTitle><MapView mission={activeM} drivers={drivers} standalone/>{activeM?<Card glow style={{ marginTop:14 }}><div style={{ fontSize:13,fontWeight:700,color:"#fff",fontFamily:"Georgia,serif",marginBottom:6 }}>{activeM.title}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)" }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{activeM.pickup}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)",marginTop:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{activeM.dropoff}</div></Card>:<div style={{ textAlign:"center",padding:"30px 0",color:"rgba(255,255,255,0.2)",fontFamily:"Georgia,serif",fontSize:13 }}>Aucune course en cours</div>}</div>;
 
   if (tab==="vehicles") return <div><SecTitle icon="★" sub="Flotte Continental Limousines">Nos véhicules</SecTitle>{VEHICLES.map(v=><Card key={v.name}><div style={{ display:"flex",alignItems:"center",gap:14 }}><div style={{ width:50,height:50,borderRadius:14,background:`${G}15`,border:`1px solid ${G}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:G }}>{v.icon}</div><div style={{ flex:1 }}><div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:14,color:"#fff" }}>{v.name}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:2 }}>{v.desc} · {v.cap}</div></div><div style={{ fontSize:9,padding:"4px 9px",borderRadius:12,background:`${G}15`,color:G,border:`1px solid ${G}25`,textTransform:"uppercase",letterSpacing:"0.06em" }}>{v.tag}</div></div></Card>)}</div>;
 
