@@ -1038,20 +1038,20 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
     setProcessing(email);
     try {
       const body = { statut, ...extraData };
-      const encodedEmail = encodeURIComponent(email);
-      const res = await fetch(`${supabaseUrl}/rest/v1/chauffeurs?email=eq.${encodedEmail}`, {
+      const res = await fetch(`${supabaseUrl}/rest/v1/chauffeurs?email=eq.${email}`, {
         method: "PATCH",
         headers: {
           "apikey":        SUPABASE_SERVICE_KEY,
           "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
           "Content-Type":  "application/json",
-          "Prefer":        "return=minimal",
+          "Prefer":        "return=representation",
         },
         body: JSON.stringify(body),
       });
-      if (!res.ok) { const e = await res.text(); console.error("PATCH error:", res.status, e); }
+      const text = await res.text();
+      console.log("PATCH result:", res.status, text);
       await loadDossiers();
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error("PATCH exception:", e); }
     setProcessing(null);
   };
 
