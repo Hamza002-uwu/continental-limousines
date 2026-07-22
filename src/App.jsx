@@ -1032,36 +1032,37 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
   useEffect(() => { loadDossiers(); }, []);
 
   // Met à jour le statut dans Supabase
-  const updateStatut = async (id, statut, extraData={}) => {
-    setProcessing(id);
+  const SUPABASE_SERVICE_KEY = "sb_secret_JZKhfoerRt5k-LPCsi2PAg_lA-GC2z3";
+
+  const updateStatut = async (email, statut, extraData={}) => {
+    setProcessing(email);
     try {
       const body = { statut, ...extraData };
-      await fetch(`${supabaseUrl}/rest/v1/chauffeurs?id=eq.${id}`, {
+      const encodedEmail = encodeURIComponent(email);
+      const res = await fetch(`${supabaseUrl}/rest/v1/chauffeurs?email=eq.${encodedEmail}`, {
         method: "PATCH",
         headers: {
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`,
+          "apikey":        SUPABASE_SERVICE_KEY,
+          "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
           "Content-Type":  "application/json",
           "Prefer":        "return=minimal",
         },
         body: JSON.stringify(body),
       });
+      if (!res.ok) { const e = await res.text(); console.error("PATCH error:", res.status, e); }
       await loadDossiers();
     } catch(e) { console.error(e); }
     setProcessing(null);
   };
 
   const handleApprove = async (d) => {
-    // 1. Met à jour le statut dans Supabase
-    await updateStatut(d.id, "approuvé");
-    // 2. Envoie l'email au chauffeur
+    await updateStatut(d.email, "approuvé");
     await sendApprovalEmail(d);
-    // 3. Affiche la confirmation
     setApproved({ email: d.email, nom: `${d.prenom} ${d.nom}`, prenom: d.prenom });
   };
 
   const handleRefuse = async (d) => {
-    await updateStatut(d.id, "refusé");
+    await updateStatut(d.email, "refusé");
   };
 
   const StatusBadgeDossier = ({ s }) => {
@@ -1221,15 +1222,15 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
             <div style={{ display:"flex",gap:10 }}>
               <Btn
                 onClick={()=>handleApprove(d)}
-                disabled={processing===d.id}
+                disabled={processing===d.email}
                 v="success"
                 style={{ flex:1 }}
               >
-                {processing===d.id ? "Traitement…" : "Approuver"}
+                {processing===d.email ? "Traitement…" : "Approuver"}
               </Btn>
               <Btn
                 onClick={()=>handleRefuse(d)}
-                disabled={processing===d.id}
+                disabled={processing===d.email}
                 v="danger"
                 style={{ flex:1 }}
               >
