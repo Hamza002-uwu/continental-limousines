@@ -1335,9 +1335,10 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
   const [filter, setFilter]       = useState("all");
   const [search, setSearch]       = useState("");
   const [titleType, setTitleType] = useState("");
-  const [clients, setClients]     = useState([]);
+  const [clients, setClients]           = useState([]);
   const [showSaveClient, setShowSaveClient] = useState(false);
-  const [clientSaved, setClientSaved]       = useState(false);
+  const [clientSaved, setClientSaved]   = useState(false);
+  const [newClient, setNewClient]       = useState({ prenom:"", nom:"", telephone:"" });
   const [form, setForm] = useState({ title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",distance:"",notes:"" });
   const g = k=>e=>setForm(p=>({...p,[k]:e.target.value}));
 
@@ -1373,7 +1374,7 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
 
   // Sauvegarder un nouveau client
   const saveClient = async () => {
-    if (!form.client) return;
+    if (!newClient.nom) return;
     const res = await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
       method: "POST",
       headers: {
@@ -1382,19 +1383,15 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
         "Content-Type":  "application/json",
         "Prefer":        "return=minimal",
       },
-      body: JSON.stringify({ nom: form.client }),
+      body: JSON.stringify({ nom: newClient.nom, prenom: newClient.prenom, telephone: newClient.telephone }),
     });
     if (res.ok) {
       await loadClients();
+      setForm(p => ({...p, client: `${newClient.prenom} ${newClient.nom}`.trim()}));
       setClientSaved(true);
-      setTimeout(() => setClientSaved(false), 2000);
+      setNewClient({ prenom:"", nom:"", telephone:"" });
+      setTimeout(() => { setClientSaved(false); setShowSaveClient(false); }, 1500);
     }
-  };
-
-  // Sélectionner un client existant
-  const selectClient = (nom) => {
-    setForm(p => ({...p, client: nom}));
-    setShowSaveClient(false);
   };
 
   useEffect(() => { loadClients(); }, []);
@@ -1453,64 +1450,66 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
           {form.title}
         </div>
       )}
-      {/* Champ Client avec bouton sauvegarde + menu clients existants */}
+      {/* Champ Client */}
       <div style={{ marginBottom:12 }}>
         <div style={{ fontSize:9,color:`${G}90`,marginBottom:5,textTransform:"uppercase",letterSpacing:"0.12em" }}>Client</div>
 
-        {/* Menu déroulant clients enregistrés */}
-        {clients.length > 0 && (
-          <div style={{ marginBottom:8 }}>
-            <select
-              onChange={e => e.target.value && selectClient(e.target.value)}
-              value=""
-              style={{ width:"100%",padding:"10px 14px",background:"#0d0d0d",border:`1px solid ${G}30`,borderRadius:12,color:G,fontSize:13,boxSizing:"border-box",outline:"none",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}
-            >
-              <option value="">— Choisir un client enregistré —</option>
-              {clients.map(c => <option key={c.id} value={c.nom}>{c.nom}</option>)}
-            </select>
+        <div style={{ display:"flex", gap:8 }}>
+          {/* Datalist avec recherche intégrée */}
+          <div style={{ flex:1, position:"relative" }}>
+            <input
+              list="clients-list"
+              placeholder="Rechercher ou saisir un client…"
+              value={form.client}
+              onChange={g("client")}
+              style={{ width:"100%",padding:"11px 14px",background:"#0d0d0d",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,color:"#fff",fontSize:14,boxSizing:"border-box",outline:"none",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}
+            />
+            <datalist id="clients-list">
+              {clients.map(c => (
+                <option key={c.id} value={`${c.prenom} ${c.nom}`.trim()}>
+                  {c.telephone || ""}
+                </option>
+              ))}
+            </datalist>
+          </div>
+
+          {/* Bouton + pour ajouter un nouveau client */}
+          <button
+            onClick={() => setShowSaveClient(!showSaveClient)}
+            title="Ajouter un nouveau client"
+            style={{ width:44,height:44,flexShrink:0,borderRadius:12,background:showSaveClient?`${G}25`:`${G}10`,border:`1px solid ${G}40`,color:G,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:300,transition:"all .2s" }}
+          >
+            {showSaveClient ? "×" : "+"}
+          </button>
+        </div>
+
+        {/* Formulaire ajout nouveau client */}
+        {showSaveClient && (
+          <div style={{ marginTop:10,padding:"14px 16px",background:"rgba(255,255,255,0.03)",border:`1px solid ${G}25`,borderRadius:14 }}>
+            <div style={{ fontSize:10,color:G,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12,fontWeight:700 }}>Nouveau client</div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8 }}>
+              <div>
+                <div style={{ fontSize:9,color:"rgba(255,255,255,0.4)",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.08em" }}>Prénom</div>
+                <input placeholder="Jean" value={newClient.prenom} onChange={e=>setNewClient(p=>({...p,prenom:e.target.value}))}
+                  style={{ width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,color:"#fff",fontSize:13,boxSizing:"border-box",outline:"none" }}/>
+              </div>
+              <div>
+                <div style={{ fontSize:9,color:"rgba(255,255,255,0.4)",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.08em" }}>Nom</div>
+                <input placeholder="Dupont" value={newClient.nom} onChange={e=>setNewClient(p=>({...p,nom:e.target.value}))}
+                  style={{ width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,color:"#fff",fontSize:13,boxSizing:"border-box",outline:"none" }}/>
+              </div>
+            </div>
+            <div style={{ marginBottom:12 }}>
+              <div style={{ fontSize:9,color:"rgba(255,255,255,0.4)",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.08em" }}>Téléphone</div>
+              <input placeholder="+33 6 xx xx xx xx" value={newClient.telephone} onChange={e=>setNewClient(p=>({...p,telephone:e.target.value}))}
+                style={{ width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,color:"#fff",fontSize:13,boxSizing:"border-box",outline:"none" }}/>
+            </div>
+            <button onClick={saveClient} disabled={!newClient.nom}
+              style={{ width:"100%",padding:"10px",borderRadius:11,background:newClient.nom?GG:"rgba(255,255,255,0.06)",border:"none",color:newClient.nom?"#0a0808":"rgba(255,255,255,0.3)",fontWeight:700,fontSize:13,cursor:newClient.nom?"pointer":"not-allowed",transition:"all .2s" }}>
+              {clientSaved ? "✓ Client enregistré !" : "Enregistrer"}
+            </button>
           </div>
         )}
-
-        {/* Saisie manuelle + bouton enregistrer */}
-        <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
-          <input
-            placeholder="Nom du client"
-            value={form.client}
-            onChange={g("client")}
-            style={{ flex:1,padding:"11px 14px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,color:"#fff",fontSize:14,boxSizing:"border-box",outline:"none",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}
-          />
-          {/* Bouton enregistrer le client */}
-          {form.client && !clients.find(c=>c.nom.toLowerCase()===form.client.toLowerCase()) && (
-            <button
-              onClick={saveClient}
-              title="Enregistrer ce client"
-              style={{ width:42,height:42,flexShrink:0,borderRadius:12,background:clientSaved?`${G}30`:`${G}15`,border:`1px solid ${G}40`,color:G,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s" }}
-            >
-              {clientSaved ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                  <polyline points="17 21 17 13 7 13 7 21"/>
-                  <polyline points="7 3 7 8 15 8"/>
-                </svg>
-              )}
-            </button>
-          )}
-          {/* Indicateur client déjà enregistré */}
-          {form.client && clients.find(c=>c.nom.toLowerCase()===form.client.toLowerCase()) && (
-            <div style={{ width:42,height:42,flexShrink:0,borderRadius:12,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center" }}
-              title="Client enregistré">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </div>
-          )}
-        </div>
-        {clientSaved && <div style={{ fontSize:11,color:G,marginTop:5 }}>✦ Client enregistré dans le répertoire</div>}
       </div>
       <Inp label="Adresse de départ" placeholder="CDG Terminal 2E, Roissy" value={form.pickup} onChange={g("pickup")}/>
       <Inp label="Adresse d'arrivée" placeholder="Hôtel Le Bristol, Paris 8e" value={form.dropoff} onChange={g("dropoff")}/>
