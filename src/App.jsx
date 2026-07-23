@@ -33,14 +33,11 @@ const VEHICLES = [
   { name:"Vito",         icon:"VI", desc:"Van compact",       cap:"5 pass.", tag:"Compact",  coords:[48.8580,2.3300] },
 ];
 
-const INIT_DRIVERS = [
-  { id:1, name:"Karim Benali",   phone:"+33 6 12 34 56 78", vehicle:"Class S", plate:"AB-123-CD", license:"PRO-B123456", licenseExp:"2028-03-15", avatar:"KB", status:"available", rating:4.9, trips:142, earnings:18650, joined:"2022-01-10", lat:49.0097, lng:2.5479 },
-  { id:2, name:"Sofiane Merabt", phone:"+33 6 98 76 54 32", vehicle:"Class E", plate:"EF-456-GH", license:"PRO-C789012", licenseExp:"2027-09-20", avatar:"SM", status:"available", rating:4.7, trips:98,  earnings:12400, joined:"2022-06-05", lat:48.8698, lng:2.3078 },
-  { id:3, name:"Youssef Haddad", phone:"+33 6 55 44 33 22", vehicle:"Class V", plate:"IJ-789-KL", license:"PRO-D345678", licenseExp:"2026-11-30", avatar:"YH", status:"busy",      rating:4.8, trips:207, earnings:29800, joined:"2021-08-18", lat:48.7262, lng:2.3652 },
-  { id:4, name:"Mehdi Tahar",    phone:"+33 6 11 22 33 44", vehicle:"Maybach", plate:"MN-012-OP", license:"PRO-E901234", licenseExp:"2029-05-01", avatar:"MT", status:"available", rating:5.0, trips:315, earnings:52100, joined:"2020-03-01", lat:48.9243, lng:2.3601 },
-];
+const INIT_DRIVERS = []; // Les chauffeurs viennent de Supabase
 
-const INIT_MISSIONS = []; // Les missions viennent maintenant de Supabase
+const INIT_MISSIONS = []; // Les missions viennent de Supabase
+
+const INIT_MSGS = []; // Les messages viennent de Supabase
 
 const SUPABASE_URL      = "https://oiksltqjynwfxvvldflt.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
@@ -136,13 +133,178 @@ const useMissions = () => {
   return { missions, loading, loadMissions, createMission, updateMission, setMissions };
 };
 
-const INIT_MSGS = [
-  { id:1, from:"CD", fromName:"Dispatch", to:"KB", toName:"Karim Benali", text:"Karim, le client CDG attend au niveau 2 sortie D.", time:"09:45", read:true },
-  { id:2, from:"KB", fromName:"Karim Benali", to:"CD", toName:"Dispatch", text:"Reçu, je suis en route, ETA 15min.", time:"09:47", read:true },
-  { id:3, from:"CD", fromName:"Dispatch", to:"KB", toName:"Karim Benali", text:"Parfait. N'oublie pas le panneau nominatif.", time:"09:48", read:false },
-];
+/* ═══════════════════════════════════════════════════════════
+   HOOK CHAUFFEURS SUPABASE
+═══════════════════════════════════════════════════════════ */
+const useDrivers = () => {
+  const [drivers, setDrivers] = useState([]);
 
-/* ═══════════════════════════════════════════════════════════  TOKENS  */
+  const loadDrivers = async () => {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/chauffeurs?statut=eq.approuvé&select=*`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDrivers(data.map((d, i) => ({
+          id:         d.email, // on utilise email comme id unique
+          name:       `${d.prenom} ${d.nom}`,
+          phone:      d.telephone || "—",
+          vehicle:    d.vehicule,
+          plate:      d.plaque,
+          license:    d.permis,
+          licenseExp: d.permis_exp,
+          avatar:     `${(d.prenom||"?").charAt(0)}${(d.nom||"?").charAt(0)}`.toUpperCase(),
+          status:     "available",
+          rating:     5.0,
+          trips:      0,
+          earnings:   0,
+          email:      d.email,
+          // Positions simulées autour de Paris
+          lat: 48.8566 + (Math.random()-0.5)*0.3,
+          lng: 2.3522  + (Math.random()-0.5)*0.4,
+        })));
+      }
+    } catch(e) { console.error("loadDrivers:", e); }
+  };
+
+  useEffect(() => { loadDrivers(); }, []);
+  return { drivers, loadDrivers };
+};
+
+/* ═══════════════════════════════════════════════════════════
+   HOOK MESSAGES SUPABASE (polling toutes les 10s)
+═══════════════════════════════════════════════════════════ */
+const useMessages = (currentUser) => {
+  const [messages, setMessages] = useState([]);
+
+  const loadMessages = async () => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/messages?select=*&order=created_at.asc`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data.map(m => ({
+          id:       m.id,
+          from:     m.from_avatar,
+          fromName: m.from_name,
+          to:       m.to_avatar,
+          toName:   m.to_name,
+          text:     m.text,
+          time:     m.time || new Date(m.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}),
+          read:     m.read || false,
+        })));
+      }
+    } catch(e) { console.error("loadMessages:", e); }
+  };
+
+  const sendMessage = async (msg) => {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
+        method: "POST",
+        headers: {
+          "apikey":        SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type":  "application/json",
+          "Prefer":        "return=minimal",
+        },
+        body: JSON.stringify({
+          from_avatar: msg.from,
+          from_name:   msg.fromName,
+          to_avatar:   msg.to,
+          to_name:     msg.toName,
+          text:        msg.text,
+          time:        msg.time,
+          read:        false,
+        }),
+      });
+      await loadMessages();
+      // Notif push pour le destinataire
+      sendPushNotif(`Message de ${msg.fromName}`, msg.text, "💬");
+    } catch(e) { console.error("sendMessage:", e); }
+  };
+
+  useEffect(() => {
+    loadMessages();
+    // Polling toutes les 10 secondes pour les nouveaux messages
+    const interval = setInterval(loadMessages, 10000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
+
+  return { messages, setMessages, sendMessage, loadMessages };
+};
+
+/* ═══════════════════════════════════════════════════════════
+   NOTIFICATIONS PUSH — système complet
+═══════════════════════════════════════════════════════════ */
+const useNotifications = (currentUser, missions, drivers) => {
+  const prevMissionsRef = useRef([]);
+
+  // Demande permission au premier chargement
+  useEffect(() => {
+    if (currentUser) requestNotifPermission();
+  }, [currentUser]);
+
+  // Surveille les nouvelles missions pour notifier les chauffeurs
+  useEffect(() => {
+    if (!currentUser || currentUser.role !== "driver") return;
+    const prev    = prevMissionsRef.current;
+    const current = missions;
+
+    if (prev.length > 0) {
+      // Cherche les nouvelles missions pour ce chauffeur
+      const newMissions = current.filter(m =>
+        m.status === "pending" &&
+        m.vehicle === currentUser.vehicle &&
+        !prev.find(p => p.id === m.id)
+      );
+      newMissions.forEach(m => {
+        sendPushNotif(
+          "Nouvelle mission disponible",
+          `${m.title} — ${m.price}€`,
+          "🚗"
+        );
+        // Vibration
+        if ("vibrate" in navigator) navigator.vibrate([300, 100, 300, 100, 300]);
+      });
+
+      // Notifie si une mission est approuvée par le dispatcher
+      const newAssigned = current.filter(m =>
+        m.status === "assigned" &&
+        m.driverEmail === currentUser.email &&
+        prev.find(p => p.id === m.id && p.status !== "assigned")
+      );
+      newAssigned.forEach(m => {
+        sendPushNotif("Mission confirmée Way-Plan", m.title, "✅");
+        if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+      });
+    }
+
+    prevMissionsRef.current = current;
+  }, [missions]);
+
+  // Surveille les acceptations pour notifier le dispatcher
+  useEffect(() => {
+    if (!currentUser || !["dispatcher","admin"].includes(currentUser.role)) return;
+    const prev    = prevMissionsRef.current;
+    const current = missions;
+
+    if (prev.length > 0) {
+      const newAccepted = current.filter(m =>
+        m.status === "accepted" &&
+        prev.find(p => p.id === m.id && p.status === "pending")
+      );
+      newAccepted.forEach(m => {
+        sendPushNotif("Mission acceptée par un chauffeur", m.title, "✦");
+        if ("vibrate" in navigator) navigator.vibrate([200]);
+      });
+    }
+  }, [missions]);
+};
+
+
 const G = "#C9A84C";
 const GG = "linear-gradient(135deg,#7A5C10,#C9A84C,#F0D878,#C9A84C,#7A5C10)";
 const BG = "#050505";
@@ -381,7 +543,7 @@ const MapView = ({ mission, drivers, standalone=false }) => {
 /* ═══════════════════════════════════════════════════════════
    CHAT DISPATCH ↔ CHAUFFEUR
 ═══════════════════════════════════════════════════════════ */
-const ChatView = ({ currentUser, drivers, messages, setMessages }) => {
+const ChatView = ({ currentUser, drivers, messages, setMessages, sendMessage }) => {
   const [activeChat, setActiveChat] = useState(null);
   const [newMsg, setNewMsg] = useState("");
   const scrollRef = useRef(null);
@@ -399,23 +561,27 @@ const ChatView = ({ currentUser, drivers, messages, setMessages }) => {
 
   const unreadCount = (contactId) => messages.filter(m => m.from===contactId && m.to===myId && !m.read).length;
 
-  const sendMsg = () => {
+  const sendMsg = async () => {
     if (!newMsg.trim() || !activeChat) return;
     const contact = contacts.find(c => c.id === activeChat);
     const msg = {
-      id: Date.now(),
-      from: myId,
+      id:       Date.now(),
+      from:     myId,
       fromName: currentUser.name,
-      to: activeChat,
-      toName: contact?.name || activeChat,
-      text: newMsg.trim(),
-      time: new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}),
-      read: false,
+      to:       activeChat,
+      toName:   contact?.name || activeChat,
+      text:     newMsg.trim(),
+      time:     new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}),
+      read:     false,
     };
-    setMessages(p => [...p, msg]);
     setNewMsg("");
-    // Notif push simulée pour l'autre côté
-    sendPushNotif("Nouveau message", `${currentUser.name}: ${newMsg.trim()}`, "Chat");
+    // Envoie dans Supabase si sendMessage disponible, sinon local
+    if (typeof sendMessage === "function") {
+      await sendMessage(msg);
+    } else {
+      setMessages(p => [...p, msg]);
+    }
+    sendPushNotif(`Message de ${currentUser.name}`, msg.text, "Chat");
     setTimeout(() => scrollRef.current?.scrollTo(0, 9999), 100);
   };
 
@@ -1448,7 +1614,7 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
   useEffect(() => { loadClients(); }, []);
 
   if (tab==="map")      return <div><SecTitle sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
-  if (tab==="chat")     return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages}/>;
+  if (tab==="chat")     return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages} sendMessage={sendMessage}/>;
   if (tab==="stats")    return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
   if (tab==="dossiers") return <DossiersView supabaseUrl={SUPABASE_URL} supabaseKey={SUPABASE_ANON_KEY}/>;
 
@@ -1732,7 +1898,7 @@ const AddressSearch = ({ label, value, onChange, placeholder }) => {
 
 const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, setToast, tab, updateMission, loadMissions }) => {
   if (tab==="map")   return <div><SecTitle sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
-  if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages}/>;
+  if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages} sendMessage={sendMessage}/>;
   if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
 
   const accepted = missions.filter(m=>m.status==="accepted");
@@ -1811,7 +1977,7 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, cur
     setToast("Mission déclinée","warn");
   };
 
-  if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages}/>;
+  if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages} sendMessage={sendMessage}/>;
   if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
 
   if (tab==="map") return <div>
@@ -1974,11 +2140,17 @@ export default function App() {
   const [screen, setScreen]         = useState("login");
   const [user, setUser]             = useState(null);
   const [tab, setTab]               = useState(null);
-  const [drivers]                   = useState(INIT_DRIVERS);
-  const [messages, setMessages]     = useState(INIT_MSGS);
   const [toast, setToast]           = useState(null);
   const [toastType, setToastType]   = useState("success");
   const [dossiersPending, setDossiersPending] = useState(0);
+
+  // Données depuis Supabase
+  const { drivers, loadDrivers }                      = useDrivers();
+  const { missions, loadMissions, createMission, updateMission } = useMissions();
+  const { messages, setMessages, sendMessage }         = useMessages(user);
+
+  // Notifications push automatiques
+  useNotifications(user, missions, drivers);
 
   // Charge le nombre de dossiers en attente
   const loadDossiersPending = async () => {
@@ -1990,15 +2162,18 @@ export default function App() {
     } catch(e) {}
   };
 
+  // Polling missions toutes les 15s pour avoir les updates en temps réel
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => { loadMissions(); loadDossiersPending(); }, 15000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   useEffect(() => { if (user?.role === "admin") loadDossiersPending(); }, [user]);
 
-  // Missions depuis Supabase
-  const { missions, loading: missionsLoading, loadMissions, createMission, updateMission } = useMissions();
-
-  // Wrapper setMissions pour compatibilité avec les vues existantes
+  // Wrapper setMissions pour compatibilité
   const setMissions = async (updater) => {
     if (typeof updater === "function") {
-      // Pour les updates de statut depuis les vues (accept/refuse)
       const current = missions;
       const updated = updater(current);
       const changed = updated.find((m, i) => m.status !== current[i]?.status || m.driverId !== current[i]?.driverId);
