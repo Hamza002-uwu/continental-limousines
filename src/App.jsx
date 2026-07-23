@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 /* ═══════════════════════════════════════════════════════════
    SUPABASE – pour connecter la vraie base de données,
    remplace ces lignes par ton URL + anon key Supabase :
-   import { createClient } from '@supabase/supabaase-js'
+   import { createClient } from '@supabase/supabase-js'
    const supabase = createClient('https://xxx.supabase.co', 'anon-key')
 ═══════════════════════════════════════════════════════════ */
 
@@ -258,74 +258,125 @@ const sendPushNotif = (title, body, icon="VTC") => {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   CARTE GPS (SVG stylisée – remplacer par Mapbox/Google Maps en prod)
+   CARTE GPS — Leaflet + OpenStreetMap (100% gratuit)
 ═══════════════════════════════════════════════════════════ */
 const MapView = ({ mission, drivers, standalone=false }) => {
-  const toSvg = (lat, lng) => {
-    const x = ((lng - 2.15) / 0.55) * 320;
-    const y = ((49.12 - lat) / 0.52) * 220;
-    return { x: Math.max(10, Math.min(310, x)), y: Math.max(10, Math.min(210, y)) };
+  const mapRef    = useRef(null);
+  const mapObj    = useRef(null);
+  const markersRef= useRef([]);
+
+  useEffect(() => {
+    // Charge Leaflet dynamiquement
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link");
+      link.id   = "leaflet-css";
+      link.rel  = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+
+    const loadLeaflet = () => {
+      if (window.L) { initMap(); return; }
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.onload = initMap;
+      document.head.appendChild(script);
+    };
+
+    const initMap = () => {
+      if (!mapRef.current || mapObj.current) return;
+      const L = window.L;
+
+      // Crée la carte centrée sur Paris
+      const map = L.map(mapRef.current, {
+        center: [48.8566, 2.3522],
+        zoom: 10,
+        zoomControl: true,
+        attributionControl: false,
+      });
+
+      // Tuiles OpenStreetMap sombres (CartoDB Dark)
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+        maxZoom: 19,
+      }).addTo(map);
+
+      mapObj.current = map;
+      updateMarkers(map, L);
+    };
+
+    loadLeaflet();
+    return () => {
+      if (mapObj.current) { mapObj.current.remove(); mapObj.current = null; }
+    };
+  }, []);
+
+  // Met à jour les marqueurs quand les données changent
+  useEffect(() => {
+    if (!mapObj.current || !window.L) return;
+    updateMarkers(mapObj.current, window.L);
+  }, [drivers, mission]);
+
+  const updateMarkers = (map, L) => {
+    // Supprime anciens marqueurs
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+
+    // Marqueurs chauffeurs
+    drivers.forEach(d => {
+      const color    = d.status === "busy" ? "#C9A84C" : "#fff";
+      const bgColor  = d.status === "busy" ? "rgba(201,168,76,0.2)" : "rgba(255,255,255,0.15)";
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="width:36px;height:36px;border-radius:50%;background:${bgColor};border:2px solid ${color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${color};font-family:Inter,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.5)">${d.avatar}</div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
+      });
+      const marker = L.marker([d.lat, d.lng], { icon })
+        .addTo(map)
+        .bindPopup(`<div style="font-family:Inter,sans-serif;font-size:12px;color:#fff;background:#111;padding:8px 12px;border-radius:8px;border:1px solid rgba(201,168,76,0.3)"><b style="color:#C9A84C">${d.name}</b><br/>${d.vehicle} · ${d.plate}<br/><span style="color:${d.status==="busy"?"#C9A84C":"#aaa"}">${d.status==="busy"?"En course":"Disponible"}</span></div>`, {
+          closeButton: false,
+          className: "cl-popup",
+        });
+      markersRef.current.push(marker);
+    });
+
+    // Marqueurs mission en cours
+    if (mission && mission.pickupLat) {
+      const iconDepart = L.divIcon({
+        className: "",
+        html: `<div style="background:#C9A84C;color:#0a0808;font-size:9px;font-weight:800;padding:4px 8px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);font-family:Inter,sans-serif">DÉPART</div>`,
+        iconAnchor: [28, 12],
+      });
+      const iconArrivee = L.divIcon({
+        className: "",
+        html: `<div style="background:#fff;color:#0a0808;font-size:9px;font-weight:800;padding:4px 8px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);font-family:Inter,sans-serif">ARRIVÉE</div>`,
+        iconAnchor: [32, 12],
+      });
+      const mD = L.marker([mission.pickupLat, mission.pickupLng], { icon: iconDepart }).addTo(map);
+      const mA = L.marker([mission.dropLat,   mission.dropLng  ], { icon: iconArrivee }).addTo(map);
+      // Ligne de trajet
+      const line = L.polyline([[mission.pickupLat, mission.pickupLng],[mission.dropLat, mission.dropLng]], {
+        color: "#C9A84C", weight: 2, dashArray: "8 6", opacity: 0.7
+      }).addTo(map);
+      markersRef.current.push(mD, mA, line);
+      // Ajuste le zoom pour voir les deux points
+      map.fitBounds([[mission.pickupLat, mission.pickupLng],[mission.dropLat, mission.dropLng]], { padding: [40, 40] });
+    }
   };
 
-  const activeDrivers = drivers.filter(d => d.status === "busy" || d.status === "available");
-
   return (
-    <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:16, overflow:"hidden", position:"relative", height: standalone ? 320 : 200 }}>
-      {/* Fond carte */}
-      <svg width="100%" height="100%" viewBox="0 0 320 220" style={{ position:"absolute", inset:0 }}>
-        {/* Fond */}
-        <rect width="320" height="220" fill="#0d0d0d"/>
-        {/* Grille routes */}
-        {[40,80,120,160,200,240,280].map(x => <line key={`v${x}`} x1={x} y1={0} x2={x} y2={220} stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>)}
-        {[40,80,120,160,200].map(y => <line key={`h${y}`} x1={0} y1={y} x2={320} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>)}
-        {/* Routes principales simulées */}
-        <path d="M0,110 Q80,90 160,110 Q240,130 320,110" stroke="rgba(255,255,255,0.08)" strokeWidth="2" fill="none"/>
-        <path d="M160,0 Q150,60 160,110 Q170,160 160,220" stroke="rgba(255,255,255,0.08)" strokeWidth="2" fill="none"/>
-        <path d="M0,60 Q60,50 120,80 Q180,110 240,70 Q280,50 320,60" stroke="rgba(255,255,255,0.06)" strokeWidth="1.5" fill="none"/>
-        <path d="M0,160 Q80,150 160,170 Q240,190 320,160" stroke="rgba(255,255,255,0.06)" strokeWidth="1.5" fill="none"/>
-        {/* Bord Paris */}
-        <circle cx="160" cy="110" r="60" stroke={`${G}15`} strokeWidth="1" fill="none" strokeDasharray="4 4"/>
-
-        {/* Mission en cours */}
-        {mission && (() => {
-          const p = toSvg(mission.pickupLat, mission.pickupLng);
-          const d = toSvg(mission.dropLat, mission.dropLng);
-          return <>
-            {/* Ligne trajet */}
-            <line x1={p.x} y1={p.y} x2={d.x} y2={d.y} stroke={G} strokeWidth="2" strokeDasharray="6 4" opacity=".7"/>
-            {/* Départ */}
-            <circle cx={p.x} cy={p.y} r="8" fill={`${G}30`} stroke={G} strokeWidth="1.5"/>
-            <circle cx={p.x} cy={p.y} r="3" fill={G}/>
-            <text x={p.x} y={p.y-12} textAnchor="middle" fill={G} fontSize="8" fontFamily="Georgia,serif">DÉPART</text>
-            {/* Arrivée */}
-            <circle cx={d.x} cy={d.y} r="8" fill="rgba(255,255,255,0.3)" stroke="#fff" strokeWidth="1.5"/>
-            <circle cx={d.x} cy={d.y} r="3" fill="#fff"/>
-            <text x={d.x} y={d.y-12} textAnchor="middle" fill="#fff" fontSize="8" fontFamily="Georgia,serif">ARRIVÉE</text>
-          </>;
-        })()}
-
-        {/* Chauffeurs */}
-        {activeDrivers.map(d => {
-          const pos = toSvg(d.lat, d.lng);
-          return <g key={d.id}>
-            <circle cx={pos.x} cy={pos.y} r="12" fill={d.status==="busy"?"rgba(201,168,76,0.2)":"rgba(255,255,255,0.2)"} stroke={d.status==="busy"?"#C9A84C":"#fff"} strokeWidth="1.5"/>
-            <text x={pos.x} y={pos.y+4} textAnchor="middle" fill="#fff" fontSize="9" fontWeight="700" fontFamily="Georgia,serif">{d.avatar}</text>
-          </g>;
-        })}
-
-        {/* Label Paris */}
-        <text x="160" y="115" textAnchor="middle" fill={`${G}40`} fontSize="10" fontFamily="Georgia,serif" letterSpacing="2">PARIS</text>
-      </svg>
-
+    <div style={{ borderRadius:16, overflow:"hidden", border:"1px solid rgba(255,255,255,0.08)", position:"relative", height: standalone ? 360 : 220 }}>
+      <div ref={mapRef} style={{ width:"100%", height:"100%" }}/>
       {/* Légende */}
-      <div style={{ position:"absolute", bottom:10, left:12, display:"flex", gap:12, fontSize:9, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>
-        <span style={{ display:"flex", alignItems:"center", gap:4, color:"#fff" }}><span style={{ width:6,height:6,borderRadius:"50%",background:"#fff",display:"inline-block" }}/>Disponible</span>
-        <span style={{ display:"flex", alignItems:"center", gap:4, color:"#C9A84C" }}><span style={{ width:6,height:6,borderRadius:"50%",background:"#C9A84C",display:"inline-block" }}/>En course</span>
+      <div style={{ position:"absolute", bottom:10, left:12, zIndex:1000, display:"flex", gap:12, fontSize:10, background:"rgba(10,10,10,0.85)", padding:"5px 10px", borderRadius:20, backdropFilter:"blur(8px)" }}>
+        <span style={{ display:"flex", alignItems:"center", gap:5, color:"#fff" }}><span style={{ width:7,height:7,borderRadius:"50%",background:"#fff",display:"inline-block" }}/>Disponible</span>
+        <span style={{ display:"flex", alignItems:"center", gap:5, color:"#C9A84C" }}><span style={{ width:7,height:7,borderRadius:"50%",background:"#C9A84C",display:"inline-block" }}/>En course</span>
       </div>
-      <div style={{ position:"absolute", top:10, right:12, fontSize:9, color:`${G}60`, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", letterSpacing:"0.1em" }}>ILE-DE-FRANCE</div>
+      <style>{`.cl-popup .leaflet-popup-content-wrapper{background:transparent;box-shadow:none;padding:0}.cl-popup .leaflet-popup-tip{display:none}`}</style>
     </div>
   );
 };
+
 
 /* ═══════════════════════════════════════════════════════════
    CHAT DISPATCH ↔ CHAUFFEUR
@@ -1514,7 +1565,7 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
       <AddressSearch label="Adresse de départ" value={form.pickup} onChange={v=>setForm(p=>({...p,pickup:v}))} placeholder="ex: CDG Terminal 2E, Roissy…"/>
       <AddressSearch label="Adresse d'arrivée" value={form.dropoff} onChange={v=>setForm(p=>({...p,dropoff:v}))} placeholder="ex: Hôtel Le Bristol, Paris 8e…"/>
       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}><Inp label="Date" type="date" value={form.date} onChange={g("date")}/><Inp label="Heure" type="time" value={form.time} onChange={g("time")}/></div>
-      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}><Inp label="Prix (€)" type="number" placeholder="0" value={form.price} onChange={g("price")}/><Inp label="Distance" placeholder="35 km" value={form.distance} onChange={g("distance")}/></div>
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}><Inp label="Prix (€)" type="number" placeholder="0" value={form.price} onChange={g("price")}/></div>
       <Sel label="Véhicule requis" value={form.vehicle} onChange={g("vehicle")}>{VEHICLES.map(v=><option key={v.name} value={v.name}>{v.name} — {v.cap}</option>)}</Sel>
       <Inp label="Notes / Instructions" placeholder="ex : accueil avec panneau…" value={form.notes} onChange={g("notes")}/>
       <Btn onClick={create}>Publier la mission</Btn>
