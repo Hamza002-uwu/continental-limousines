@@ -545,14 +545,23 @@ const MapView = ({ mission, drivers, standalone=false }) => {
 ═══════════════════════════════════════════════════════════ */
 const ChatView = ({ currentUser, drivers, messages, setMessages, sendMessage }) => {
   const [activeChat, setActiveChat] = useState(null);
-  const [newMsg, setNewMsg] = useState("");
-  const scrollRef = useRef(null);
+  const [newMsg, setNewMsg]         = useState("");
+  const scrollRef                   = useRef(null);
 
-  const myId = currentUser.avatar;
+  if (!currentUser) return null;
+
+  const myId       = currentUser.avatar || "??";
   const isDispatch = currentUser.role === "dispatcher" || currentUser.role === "admin";
 
+  // Contacts basés sur les vrais chauffeurs Supabase
+  const driverContacts = isDispatch && Array.isArray(drivers) && drivers.length > 0
+    ? drivers.map(d => ({ id: d.avatar || d.email || "??", name: d.name || "Chauffeur", avatar: d.avatar || "??", vehicle: d.vehicle || "", status: d.status || "available" }))
+    : [];
+
   const contacts = isDispatch
-    ? drivers.map(d => ({ id:d.avatar, name:d.name, avatar:d.avatar, vehicle:d.vehicle, status:d.status }))
+    ? driverContacts.length > 0
+      ? driverContacts
+      : []
     : [{ id:"CD", name:"Centre Dispatch", avatar:"CD", vehicle:"", status:"available" }];
 
   const conversation = activeChat
