@@ -148,11 +148,11 @@ const GG = "linear-gradient(135deg,#7A5C10,#C9A84C,#F0D878,#C9A84C,#7A5C10)";
 const BG = "#050505";
 
 const STATUS = {
-  pending:   { label:"En attente", color:"#C9A84C", bg:"rgba(201,168,76,0.12)"  },
-  accepted:  { label:"Acceptée",   color:"#60A5FA", bg:"rgba(96,165,250,0.12)"  },
-  assigned:  { label:"Way-Plan ✓", color:"#A78BFA", bg:"rgba(167,139,250,0.12)" },
-  completed: { label:"Terminée",   color:"#34D399", bg:"rgba(52,211,153,0.12)"  },
-  refused:   { label:"Refusée",    color:"#F87171", bg:"rgba(248,113,113,0.12)" },
+  pending:   { label:"En attente", color:"#C9A84C", bg:"rgba(201,168,76,0.10)"  },
+  accepted:  { label:"Acceptée",   color:"#C9A84C", bg:"rgba(201,168,76,0.06)"  },
+  assigned:  { label:"Way-Plan ✓", color:"#fff",    bg:"rgba(255,255,255,0.08)" },
+  completed: { label:"Terminée",   color:"#fff",    bg:"rgba(255,255,255,0.06)" },
+  refused:   { label:"Refusée",    color:"rgba(255,255,255,0.4)", bg:"rgba(255,255,255,0.04)" },
 };
 
 /* ═══════════════════════════════════════════════════════════  ATOMS  */
@@ -161,7 +161,7 @@ const CLLogo = ({ size="md" }) => {
   const sw = { lg:18, md:11, sm:8  }[size] || 11;
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:size==="lg"?"center":"flex-start" }}>
-      <div style={{ fontFamily:"'Didot','Bodoni MT','Playfair Display',Georgia,serif", fontSize:fs, fontWeight:700, color:"#fff", lineHeight:.9, letterSpacing:"-2px", position:"relative", display:"inline-block" }}>
+      <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", fontSize:fs, fontWeight:700, color:"#fff", lineHeight:.9, letterSpacing:"-2px", position:"relative", display:"inline-block" }}>
         CL
         <span style={{ position:"absolute", top: size==="lg"?-8:-4, right: size==="lg"?-22:-12, display:"flex", flexDirection:"column", gap:1 }}>
           {[.9,.6,.35].map((op,i)=>(
@@ -171,20 +171,20 @@ const CLLogo = ({ size="md" }) => {
           ))}
         </span>
       </div>
-      {size!=="sm" && <div style={{ fontSize:size==="lg"?11:7, letterSpacing:"0.2em", color:"rgba(255,255,255,0.5)", textTransform:"uppercase", marginTop:size==="lg"?10:3, fontFamily:"Georgia,serif" }}>Continental Limousines</div>}
+      {size!=="sm" && <div style={{ fontSize:size==="lg"?11:7, letterSpacing:"0.2em", color:"rgba(255,255,255,0.5)", textTransform:"uppercase", marginTop:size==="lg"?10:3, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>Continental Limousines</div>}
     </div>
   );
 };
 
 const Badge = ({ status }) => {
   const s = STATUS[status]||STATUS.pending;
-  return <span style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:9, fontWeight:700, letterSpacing:"0.1em", padding:"3px 9px", borderRadius:20, color:s.color, background:s.bg, border:`1px solid ${s.color}35`, textTransform:"uppercase", whiteSpace:"nowrap", fontFamily:"Georgia,serif" }}>
+  return <span style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:9, fontWeight:700, letterSpacing:"0.1em", padding:"3px 9px", borderRadius:20, color:s.color, background:s.bg, border:`1px solid ${s.color}35`, textTransform:"uppercase", whiteSpace:"nowrap", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>
     <span style={{ width:5,height:5,borderRadius:"50%",background:s.color,display:"inline-block" }}/>{s.label}
   </span>;
 };
 
 const Av = ({ txt, size=40, color=G }) => (
-  <div style={{ width:size, height:size, borderRadius:"50%", background:"linear-gradient(135deg,#1a1408,#2a2010)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:size*.3, fontWeight:700, color, flexShrink:0, border:`1.5px solid ${color}40`, fontFamily:"Georgia,serif" }}>{txt}</div>
+  <div style={{ width:size, height:size, borderRadius:"50%", background:"linear-gradient(135deg,#1a1408,#2a2010)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:size*.3, fontWeight:700, color, flexShrink:0, border:`1.5px solid ${color}40`, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{txt}</div>
 );
 
 const Card = ({ children, glow=false, style={} }) => (
@@ -194,30 +194,30 @@ const Card = ({ children, glow=false, style={} }) => (
 const Inp = ({ label, error, ...p }) => {
   const [f,setF] = useState(false);
   return <div style={{ marginBottom:12 }}>
-    {label && <div style={{ fontSize:9, color:`${G}90`, marginBottom:5, textTransform:"uppercase", letterSpacing:"0.12em", fontFamily:"Georgia,serif" }}>{label}</div>}
+    {label && <div style={{ fontSize:9, color:`${G}90`, marginBottom:5, textTransform:"uppercase", letterSpacing:"0.12em", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{label}</div>}
     <input {...p} onFocus={e=>{setF(true);p.onFocus?.(e)}} onBlur={e=>{setF(false);p.onBlur?.(e)}}
-      style={{ width:"100%", padding:"11px 14px", background:"rgba(255,255,255,0.04)", border:`1px solid ${error?"#F87171":f?G+"60":"rgba(255,255,255,0.1)"}`, borderRadius:12, color:"#fff", fontSize:14, boxSizing:"border-box", outline:"none", fontFamily:"Georgia,serif", transition:"border-color .2s", ...p.style }}/>
+      style={{ width:"100%", padding:"11px 14px", background:"rgba(255,255,255,0.04)", border:`1px solid ${error?"#F87171":f?G+"60":"rgba(255,255,255,0.1)"}`, borderRadius:12, color:"#fff", fontSize:14, boxSizing:"border-box", outline:"none", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", transition:"border-color .2s", ...p.style }}/>
     {error && <div style={{ fontSize:11, color:"#F87171", marginTop:4 }}>{error}</div>}
   </div>;
 };
 
 const Sel = ({ label, children, ...p }) => (
   <div style={{ marginBottom:12 }}>
-    {label && <div style={{ fontSize:9, color:`${G}90`, marginBottom:5, textTransform:"uppercase", letterSpacing:"0.12em", fontFamily:"Georgia,serif" }}>{label}</div>}
-    <select {...p} style={{ width:"100%", padding:"11px 14px", background:"#0d0d0d", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, color:"#fff", fontSize:14, boxSizing:"border-box", outline:"none", fontFamily:"Georgia,serif" }}>{children}</select>
+    {label && <div style={{ fontSize:9, color:`${G}90`, marginBottom:5, textTransform:"uppercase", letterSpacing:"0.12em", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{label}</div>}
+    <select {...p} style={{ width:"100%", padding:"11px 14px", background:"#0d0d0d", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, color:"#fff", fontSize:14, boxSizing:"border-box", outline:"none", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{children}</select>
   </div>
 );
 
 const Btn = ({ children, onClick, v="gold", disabled=false, style={} }) => {
-  const S = { gold:{background:GG,color:"#080604",border:"none"}, outline:{background:"transparent",color:G,border:`1px solid ${G}50`}, danger:{background:"rgba(239,68,68,0.12)",color:"#F87171",border:"1px solid rgba(239,68,68,0.3)"}, success:{background:"linear-gradient(135deg,#064E3B,#059669)",color:"#fff",border:"none"}, ghost:{background:"rgba(255,255,255,0.04)",color:"rgba(255,255,255,0.5)",border:"1px solid rgba(255,255,255,0.09)"} };
-  return <button onClick={onClick} disabled={disabled} style={{ padding:"12px 18px", borderRadius:13, fontWeight:700, fontSize:13, cursor:disabled?"not-allowed":"pointer", fontFamily:"Georgia,serif", letterSpacing:"0.05em", width:"100%", opacity:disabled?.4:1, transition:"all .2s", ...S[v], ...style }}>{children}</button>;
+  const S = { gold:{background:GG,color:"#080604",border:"none"}, outline:{background:"transparent",color:G,border:`1px solid ${G}50`}, danger:{background:"rgba(239,68,68,0.12)",color:"#F87171",border:"1px solid rgba(239,68,68,0.3)"}, success:{background:"linear-gradient(135deg,#8B6914,#C9A84C)",color:"#fff",border:"none"}, ghost:{background:"rgba(255,255,255,0.04)",color:"rgba(255,255,255,0.5)",border:"1px solid rgba(255,255,255,0.09)"} };
+  return <button onClick={onClick} disabled={disabled} style={{ padding:"12px 18px", borderRadius:13, fontWeight:700, fontSize:13, cursor:disabled?"not-allowed":"pointer", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", letterSpacing:"0.05em", width:"100%", opacity:disabled?.4:1, transition:"all .2s", ...S[v], ...style }}>{children}</button>;
 };
 
 const SecTitle = ({ icon, children, sub }) => (
   <div style={{ marginBottom:14 }}>
     <div style={{ display:"flex", alignItems:"center", gap:7 }}>
       {icon && <span style={{ color:G, fontSize:12 }}>{icon}</span>}
-      <span style={{ fontSize:10, fontWeight:700, color:`${G}CC`, textTransform:"uppercase", letterSpacing:"0.1em", fontFamily:"Georgia,serif" }}>{children}</span>
+      <span style={{ fontSize:10, fontWeight:700, color:`${G}CC`, textTransform:"uppercase", letterSpacing:"0.1em", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{children}</span>
     </div>
     {sub && <div style={{ fontSize:11, color:"rgba(255,255,255,0.3)", marginTop:3 }}>{sub}</div>}
   </div>
@@ -231,10 +231,10 @@ const Divider = () => (
   </div>
 );
 
-const Dot = ({ on }) => <div style={{ width:8,height:8,borderRadius:"50%",background:on?"#34D399":"#F59E0B",boxShadow:`0 0 7px ${on?"#34D399":"#F59E0B"}`,flexShrink:0 }}/>;
+const Dot = ({ on }) => <div style={{ width:8,height:8,borderRadius:"50%",background:on?G:"rgba(255,255,255,0.3)",boxShadow:`0 0 7px ${on?"#fff":"#C9A84C"}`,flexShrink:0 }}/>;
 
 const Toast = ({ msg, type="success" }) => (
-  <div style={{ position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",zIndex:9999,background:"rgba(8,6,4,.97)",border:`1px solid ${type==="success"?G:"#F87171"}60`,color:type==="success"?G:"#F87171",padding:"11px 26px",borderRadius:30,fontWeight:700,fontSize:13,display:"flex",gap:9,alignItems:"center",fontFamily:"Georgia,serif",letterSpacing:".04em",boxShadow:`0 8px 40px ${type==="success"?G:"#F87171"}20`,whiteSpace:"nowrap",backdropFilter:"blur(20px)",animation:"toastIn .3s ease" }}>
+  <div style={{ position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",zIndex:9999,background:"rgba(8,6,4,.97)",border:`1px solid ${type==="success"?G:"#F87171"}60`,color:type==="success"?G:"#F87171",padding:"11px 26px",borderRadius:30,fontWeight:700,fontSize:13,display:"flex",gap:9,alignItems:"center",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",letterSpacing:".04em",boxShadow:`0 8px 40px ${type==="success"?G:"#F87171"}20`,whiteSpace:"nowrap",backdropFilter:"blur(20px)",animation:"toastIn .3s ease" }}>
     <span>{type==="success"?"✦":"✕"}</span>{msg}
   </div>
 );
@@ -298,9 +298,9 @@ const MapView = ({ mission, drivers, standalone=false }) => {
             <circle cx={p.x} cy={p.y} r="3" fill={G}/>
             <text x={p.x} y={p.y-12} textAnchor="middle" fill={G} fontSize="8" fontFamily="Georgia,serif">DÉPART</text>
             {/* Arrivée */}
-            <circle cx={d.x} cy={d.y} r="8" fill="rgba(52,211,153,0.3)" stroke="#34D399" strokeWidth="1.5"/>
-            <circle cx={d.x} cy={d.y} r="3" fill="#34D399"/>
-            <text x={d.x} y={d.y-12} textAnchor="middle" fill="#34D399" fontSize="8" fontFamily="Georgia,serif">ARRIVÉE</text>
+            <circle cx={d.x} cy={d.y} r="8" fill="rgba(255,255,255,0.3)" stroke="#fff" strokeWidth="1.5"/>
+            <circle cx={d.x} cy={d.y} r="3" fill="#fff"/>
+            <text x={d.x} y={d.y-12} textAnchor="middle" fill="#fff" fontSize="8" fontFamily="Georgia,serif">ARRIVÉE</text>
           </>;
         })()}
 
@@ -308,7 +308,7 @@ const MapView = ({ mission, drivers, standalone=false }) => {
         {activeDrivers.map(d => {
           const pos = toSvg(d.lat, d.lng);
           return <g key={d.id}>
-            <circle cx={pos.x} cy={pos.y} r="12" fill={d.status==="busy"?"rgba(245,158,11,0.2)":"rgba(52,211,153,0.2)"} stroke={d.status==="busy"?"#F59E0B":"#34D399"} strokeWidth="1.5"/>
+            <circle cx={pos.x} cy={pos.y} r="12" fill={d.status==="busy"?"rgba(201,168,76,0.2)":"rgba(255,255,255,0.2)"} stroke={d.status==="busy"?"#C9A84C":"#fff"} strokeWidth="1.5"/>
             <text x={pos.x} y={pos.y+4} textAnchor="middle" fill="#fff" fontSize="9" fontWeight="700" fontFamily="Georgia,serif">{d.avatar}</text>
           </g>;
         })}
@@ -318,11 +318,11 @@ const MapView = ({ mission, drivers, standalone=false }) => {
       </svg>
 
       {/* Légende */}
-      <div style={{ position:"absolute", bottom:10, left:12, display:"flex", gap:12, fontSize:9, fontFamily:"Georgia,serif" }}>
-        <span style={{ display:"flex", alignItems:"center", gap:4, color:"#34D399" }}><span style={{ width:6,height:6,borderRadius:"50%",background:"#34D399",display:"inline-block" }}/>Disponible</span>
-        <span style={{ display:"flex", alignItems:"center", gap:4, color:"#F59E0B" }}><span style={{ width:6,height:6,borderRadius:"50%",background:"#F59E0B",display:"inline-block" }}/>En course</span>
+      <div style={{ position:"absolute", bottom:10, left:12, display:"flex", gap:12, fontSize:9, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>
+        <span style={{ display:"flex", alignItems:"center", gap:4, color:"#fff" }}><span style={{ width:6,height:6,borderRadius:"50%",background:"#fff",display:"inline-block" }}/>Disponible</span>
+        <span style={{ display:"flex", alignItems:"center", gap:4, color:"#C9A84C" }}><span style={{ width:6,height:6,borderRadius:"50%",background:"#C9A84C",display:"inline-block" }}/>En course</span>
       </div>
-      <div style={{ position:"absolute", top:10, right:12, fontSize:9, color:`${G}60`, fontFamily:"Georgia,serif", letterSpacing:"0.1em" }}>ILE-DE-FRANCE</div>
+      <div style={{ position:"absolute", top:10, right:12, fontSize:9, color:`${G}60`, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", letterSpacing:"0.1em" }}>ILE-DE-FRANCE</div>
     </div>
   );
 };
@@ -384,7 +384,7 @@ const ChatView = ({ currentUser, drivers, messages, setMessages }) => {
           <button onClick={()=>setActiveChat(null)} style={{ width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>←</button>
           <Av txt={contact?.avatar||"?"} size={36}/>
           <div>
-            <div style={{ fontFamily:"Georgia,serif", fontWeight:700, fontSize:14, color:"#fff" }}>{contact?.name}</div>
+            <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", fontWeight:700, fontSize:14, color:"#fff" }}>{contact?.name}</div>
             {contact?.vehicle && <div style={{ fontSize:11, color:`${G}80` }}>{contact.vehicle}</div>}
           </div>
           <div style={{ marginLeft:"auto" }}><Dot on={contact?.status==="available"}/></div>
@@ -393,14 +393,14 @@ const ChatView = ({ currentUser, drivers, messages, setMessages }) => {
         {/* Messages */}
         <div ref={scrollRef} style={{ flex:1, overflowY:"auto", display:"flex", flexDirection:"column", gap:8, paddingBottom:8 }}>
           {conversation.length === 0 && (
-            <div style={{ textAlign:"center", color:"rgba(255,255,255,0.2)", paddingTop:40, fontFamily:"Georgia,serif", fontSize:13 }}>Démarrez la conversation…</div>
+            <div style={{ textAlign:"center", color:"rgba(255,255,255,0.2)", paddingTop:40, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", fontSize:13 }}>Démarrez la conversation…</div>
           )}
           {conversation.map(m => {
             const isMine = m.from === myId;
             return (
               <div key={m.id} style={{ display:"flex", justifyContent:isMine?"flex-end":"flex-start" }}>
                 <div style={{ maxWidth:"78%", padding:"10px 14px", borderRadius:isMine?"16px 16px 4px 16px":"16px 16px 16px 4px", background:isMine?`${G}20`:"rgba(255,255,255,0.06)", border:`1px solid ${isMine?G+"35":"rgba(255,255,255,0.08)"}` }}>
-                  <div style={{ fontSize:13, color:"#fff", lineHeight:1.5, fontFamily:"Georgia,serif" }}>{m.text}</div>
+                  <div style={{ fontSize:13, color:"#fff", lineHeight:1.5, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{m.text}</div>
                   <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", marginTop:5, textAlign:"right", letterSpacing:"0.04em" }}>{m.time}{isMine && <span style={{ marginLeft:4, color:m.read?G:"rgba(255,255,255,0.3)" }}>✓✓</span>}</div>
                 </div>
               </div>
@@ -415,7 +415,7 @@ const ChatView = ({ currentUser, drivers, messages, setMessages }) => {
             onChange={e=>setNewMsg(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&sendMsg()}
             placeholder="Votre message…"
-            style={{ flex:1, padding:"11px 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, color:"#fff", fontSize:14, outline:"none", fontFamily:"Georgia,serif" }}
+            style={{ flex:1, padding:"11px 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, color:"#fff", fontSize:14, outline:"none", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}
           />
           <button onClick={sendMsg} style={{ width:44,height:44,borderRadius:12,background:GG,border:"none",color:"#0a0808",fontSize:18,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center" }}>→</button>
         </div>
@@ -437,7 +437,7 @@ const ChatView = ({ currentUser, drivers, messages, setMessages }) => {
                 {unread > 0 && <div style={{ position:"absolute",top:-4,right:-4,width:18,height:18,borderRadius:"50%",background:GG,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#0a0808" }}>{unread}</div>}
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ fontFamily:"Georgia,serif", fontWeight:700, fontSize:14, color:"#fff" }}>{c.name}</div>
+                <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", fontWeight:700, fontSize:14, color:"#fff" }}>{c.name}</div>
                 {c.vehicle && <div style={{ fontSize:11, color:`${G}80`, marginTop:1 }}>{c.vehicle}</div>}
                 {lastMsg && <div style={{ fontSize:12, color:"rgba(255,255,255,0.35)", marginTop:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{lastMsg.text}</div>}
               </div>
@@ -469,15 +469,15 @@ const StatsView = ({ missions, drivers, currentUser }) => {
   const kpis = driver
     ? [
         { label:"Missions totales", val:driver.trips, color:G, icon:"◆" },
-        { label:"Note moyenne",     val:`★ ${driver.rating}`, color:"#F59E0B", icon:"★" },
-        { label:"Gains totaux",     val:`${driver.earnings.toLocaleString()}€`, color:"#34D399", icon:"€" },
-        { label:"Ce mois",          val:`${completed.length} course${completed.length>1?"s":""}`, color:"#60A5FA", icon:"Mois" },
+        { label:"Note moyenne",     val:`★ ${driver.rating}`, color:"#C9A84C", icon:"★" },
+        { label:"Gains totaux",     val:`${driver.earnings.toLocaleString()}€`, color:"#fff", icon:"€" },
+        { label:"Ce mois",          val:`${completed.length} course${completed.length>1?"s":""}`, color:"#C9A84C", icon:"Mois" },
       ]
     : [
         { label:"Total missions",  val:missions.length,                                                    color:G,        icon:"◆" },
-        { label:"Chiffre réalisé", val:`${missions.filter(m=>m.status==="completed").reduce((a,m)=>a+m.price,0)}€`, color:"#34D399", icon:"€" },
-        { label:"En cours",        val:missions.filter(m=>["accepted","assigned"].includes(m.status)).length, color:"#60A5FA", icon:"VTC" },
-        { label:"Chauffeurs actifs",val:drivers.filter(d=>d.status==="available").length, color:"#A78BFA", icon:"◈" },
+        { label:"Chiffre réalisé", val:`${missions.filter(m=>m.status==="completed").reduce((a,m)=>a+m.price,0)}€`, color:"#fff", icon:"€" },
+        { label:"En cours",        val:missions.filter(m=>["accepted","assigned"].includes(m.status)).length, color:"#C9A84C", icon:"VTC" },
+        { label:"Chauffeurs actifs",val:drivers.filter(d=>d.status==="available").length, color:"#fff", icon:"◈" },
       ];
 
   return (
@@ -488,8 +488,8 @@ const StatsView = ({ missions, drivers, currentUser }) => {
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:20 }}>
         {kpis.map(k=>(
           <div key={k.label} style={{ background:"rgba(255,255,255,0.025)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:16, padding:"16px 14px", textAlign:"center" }}>
-            <div style={{ fontSize:9, color:`${G}60`, textTransform:"uppercase", letterSpacing:"0.1em", fontFamily:"Georgia,serif", marginBottom:6 }}>{k.label}</div>
-            <div style={{ fontSize:22, fontWeight:700, color:k.color, fontFamily:"Georgia,serif" }}>{k.val}</div>
+            <div style={{ fontSize:9, color:`${G}60`, textTransform:"uppercase", letterSpacing:"0.1em", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", marginBottom:6 }}>{k.label}</div>
+            <div style={{ fontSize:22, fontWeight:700, color:k.color, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{k.val}</div>
           </div>
         ))}
       </div>
@@ -500,9 +500,9 @@ const StatsView = ({ missions, drivers, currentUser }) => {
         <div style={{ display:"flex", gap:8, alignItems:"flex-end", height:100, padding:"0 4px" }}>
           {monthData.map(d=>(
             <div key={d.m} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-              <div style={{ fontSize:9, color:`${G}90`, fontFamily:"Georgia,serif" }}>{d.v}</div>
+              <div style={{ fontSize:9, color:`${G}90`, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{d.v}</div>
               <div style={{ width:"100%", height:`${(d.v/maxV)*80}px`, background:`linear-gradient(to top,${G}60,${G}20)`, borderRadius:"4px 4px 0 0", border:`1px solid ${G}30`, minHeight:8, transition:"height .3s" }}/>
-              <div style={{ fontSize:9, color:"rgba(255,255,255,0.35)", fontFamily:"Georgia,serif" }}>{d.m}</div>
+              <div style={{ fontSize:9, color:"rgba(255,255,255,0.35)", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{d.m}</div>
             </div>
           ))}
         </div>
@@ -517,11 +517,11 @@ const StatsView = ({ missions, drivers, currentUser }) => {
               <div style={{ width:22, height:22, borderRadius:"50%", background:i===0?GG:i===1?"rgba(192,192,192,0.2)":i===2?"rgba(205,127,50,0.2)":"rgba(255,255,255,0.05)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:i===0?"#0a0808":"rgba(255,255,255,0.5)", border:`1px solid ${i===0?G:i===1?"#C0C0C0":i===2?"#CD7F32":"rgba(255,255,255,0.1)"}50` }}>{i+1}</div>
               <Av txt={d.avatar} size={32}/>
               <div style={{ flex:1 }}>
-                <div style={{ fontFamily:"Georgia,serif", fontSize:13, fontWeight:700, color:"#fff" }}>{d.name}</div>
+                <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", fontSize:13, fontWeight:700, color:"#fff" }}>{d.name}</div>
                 <div style={{ fontSize:11, color:"rgba(255,255,255,0.35)" }}>{d.vehicle} · ★ {d.rating}</div>
               </div>
               <div style={{ textAlign:"right" }}>
-                <div style={{ fontSize:13, fontWeight:700, color:G, fontFamily:"Georgia,serif" }}>{d.trips}</div>
+                <div style={{ fontSize:13, fontWeight:700, color:G, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{d.trips}</div>
                 <div style={{ fontSize:9, color:"rgba(255,255,255,0.35)", textTransform:"uppercase", letterSpacing:"0.06em" }}>missions</div>
               </div>
             </div>
@@ -536,7 +536,7 @@ const StatsView = ({ missions, drivers, currentUser }) => {
           {myMissions.slice(0,5).map(m=>(
             <div key={m.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
               <div>
-                <div style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,0.8)", fontFamily:"Georgia,serif" }}>{m.title.split("–")[0].trim()}</div>
+                <div style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,0.8)", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{m.title.split("–")[0].trim()}</div>
                 <div style={{ fontSize:11, color:"rgba(255,255,255,0.35)", marginTop:2 }}>{m.date}</div>
               </div>
               <div style={{ textAlign:"right" }}>
@@ -630,7 +630,7 @@ const LoginScreen = ({ onLogin, onRegister }) => {
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:BG, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"28px 20px", fontFamily:"Georgia,serif", position:"relative", overflow:"hidden" }}>
+    <div style={{ minHeight:"100vh", background:BG, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"28px 20px", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", position:"relative", overflow:"hidden" }}>
       <div style={{ position:"fixed", inset:0, background:"radial-gradient(ellipse 80% 60% at 50% 20%, rgba(201,168,76,0.07) 0%, transparent 70%)", pointerEvents:"none" }}/>
       <div style={{ position:"fixed", top:0, left:0, right:0, height:1, background:`linear-gradient(to right,transparent,${G}55,transparent)` }}/>
 
@@ -642,14 +642,14 @@ const LoginScreen = ({ onLogin, onRegister }) => {
         </div>
 
         <Card style={{ border:`1px solid ${G}20` }}>
-          <div style={{ fontFamily:"Georgia,serif", fontSize:15, fontWeight:700, color:"#fff", marginBottom:4 }}>Connexion</div>
+          <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", fontSize:15, fontWeight:700, color:"#fff", marginBottom:4 }}>Connexion</div>
           <div style={{ fontSize:12, color:"rgba(255,255,255,0.3)", marginBottom:18 }}>Accès réservé aux membres autorisés</div>
           <Inp label="Adresse email" type="email" placeholder="votre@continental-limousines.fr" value={email} onChange={e=>{setEmail(e.target.value);setErr("")}}/>
           <div style={{ marginBottom:16 }}>
             <div style={{ fontSize:9, color:`${G}90`, marginBottom:5, textTransform:"uppercase", letterSpacing:"0.12em" }}>Mot de passe</div>
             <div style={{ position:"relative" }}>
               <input type={show?"text":"password"} placeholder="••••••••••" value={pw} onChange={e=>{setPw(e.target.value);setErr("")}} onKeyDown={e=>e.key==="Enter"&&handle()}
-                style={{ width:"100%", padding:"11px 44px 11px 14px", background:"rgba(255,255,255,0.04)", border:`1px solid ${err?"#F87171":"rgba(255,255,255,0.1)"}`, borderRadius:12, color:"#fff", fontSize:14, boxSizing:"border-box", outline:"none", fontFamily:"Georgia,serif" }}/>
+                style={{ width:"100%", padding:"11px 44px 11px 14px", background:"rgba(255,255,255,0.04)", border:`1px solid ${err?"#F87171":"rgba(255,255,255,0.1)"}`, borderRadius:12, color:"#fff", fontSize:14, boxSizing:"border-box", outline:"none", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}/>
               <button onClick={()=>setShow(!show)} style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:14,padding:4 }}>{show?"🙈":"👁"}</button>
             </div>
           </div>
@@ -660,12 +660,12 @@ const LoginScreen = ({ onLogin, onRegister }) => {
         </Card>
 
         <div style={{ marginTop:14, padding:"12px 16px", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14 }}>
-          <div style={{ fontSize:10, color:`${G}60`, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6, fontFamily:"Georgia,serif" }}>Accès restreint</div>
+          <div style={{ fontSize:10, color:`${G}60`, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>Accès restreint</div>
           <div style={{ fontSize:11, color:"rgba(255,255,255,0.3)", lineHeight:1.7 }}>Cet espace est réservé aux collaborateurs et partenaires Continental Limousines.</div>
         </div>
 
         <div style={{ textAlign:"center", marginTop:14 }}>
-          <button onClick={onRegister} style={{ background:"none",border:"none",color:`${G}60`,fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",textDecoration:"underline",textDecorationColor:`${G}30` }}>Demande d'inscription chauffeur</button>
+          <button onClick={onRegister} style={{ background:"none",border:"none",color:`${G}60`,fontSize:12,cursor:"pointer",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",textDecoration:"underline",textDecorationColor:`${G}30` }}>Demande d'inscription chauffeur</button>
         </div>
         <div style={{ textAlign:"center", marginTop:20, fontSize:10, color:"rgba(255,255,255,0.18)", letterSpacing:"0.06em" }}>© Continental Limousines · Roissy CDG · Genève</div>
       </div>
@@ -792,7 +792,7 @@ const RegisterScreen = ({ onBack }) => {
   // Composant zone de dépôt
   const UploadZone = ({ label, file, preview, inputId, onSelect, accept }) => (
     <div style={{ marginBottom:14 }}>
-      <div style={{ fontSize:9,color:`${G}90`,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"Georgia,serif" }}>{label}</div>
+      <div style={{ fontSize:9,color:`${G}90`,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{label}</div>
       <label htmlFor={inputId} style={{ display:"block", cursor:"pointer" }}>
         <input id={inputId} type="file" accept={accept} onChange={onSelect} style={{ display:"none" }}/>
         {file ? (
@@ -806,11 +806,11 @@ const RegisterScreen = ({ onBack }) => {
               <polyline points="10 9 9 9 8 9"/>
             </svg>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:12,fontWeight:700,color:"#fff",fontFamily:"Georgia,serif" }}>{file.name}</div>
+              <div style={{ fontSize:12,fontWeight:700,color:"#fff",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{file.name}</div>
               <div style={{ fontSize:10,color:`${G}80`,marginTop:2 }}>{(file.size/1024).toFixed(0)} Ko · Appuyer pour changer</div>
             </div>
             {/* Icône check SVG */}
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"/>
             </svg>
           </div>
@@ -822,7 +822,7 @@ const RegisterScreen = ({ onBack }) => {
               <line x1="12" y1="12" x2="12" y2="21"/>
               <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
             </svg>
-            <div style={{ fontSize:12,color:"rgba(255,255,255,0.5)",fontFamily:"Georgia,serif" }}>Appuyer pour sélectionner</div>
+            <div style={{ fontSize:12,color:"rgba(255,255,255,0.5)",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>Appuyer pour sélectionner</div>
             <div style={{ fontSize:10,color:"rgba(255,255,255,0.25)",marginTop:4 }}>JPG · PNG · PDF — Max 5 Mo</div>
           </div>
         )}
@@ -831,13 +831,13 @@ const RegisterScreen = ({ onBack }) => {
   );
 
   if (done) return (
-    <div style={{ minHeight:"100vh", background:BG, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:28, fontFamily:"Georgia,serif", textAlign:"center" }}>
+    <div style={{ minHeight:"100vh", background:BG, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:28, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", textAlign:"center" }}>
       {/* Icône check SVG */}
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom:20 }}>
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
         <polyline points="22 4 12 14.01 9 11.01"/>
       </svg>
-      <div style={{ fontFamily:"Georgia,serif",fontSize:20,fontWeight:700,color:"#fff",marginBottom:10 }}>Dossier transmis</div>
+      <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:20,fontWeight:700,color:"#fff",marginBottom:10 }}>Dossier transmis</div>
       <div style={{ fontSize:13,color:"rgba(255,255,255,0.4)",lineHeight:1.8,marginBottom:32 }}>
         Votre dossier est en cours de vérification.<br/>
         Vos identifiants vous seront envoyés<br/>par email sous 24–48h.
@@ -847,7 +847,7 @@ const RegisterScreen = ({ onBack }) => {
   );
 
   return (
-    <div style={{ minHeight:"100vh", background:BG, fontFamily:"Georgia,serif", color:"#fff" }}>
+    <div style={{ minHeight:"100vh", background:BG, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", color:"#fff" }}>
       <div style={{ padding:"16px 18px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", alignItems:"center", gap:14, background:"rgba(5,5,5,0.95)", position:"sticky", top:0, zIndex:10, backdropFilter:"blur(20px)" }}>
         <button onClick={onBack} style={{ width:34,height:34,borderRadius:"50%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -883,14 +883,14 @@ const RegisterScreen = ({ onBack }) => {
 
           {/* Mot de passe */}
           <div style={{ marginBottom:12 }}>
-            <div style={{ fontSize:9, color:`${G}90`, marginBottom:5, textTransform:"uppercase", letterSpacing:"0.12em", fontFamily:"Georgia,serif" }}>Mot de passe</div>
+            <div style={{ fontSize:9, color:`${G}90`, marginBottom:5, textTransform:"uppercase", letterSpacing:"0.12em", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>Mot de passe</div>
             <div style={{ position:"relative" }}>
               <input
                 type={showPw?"text":"password"}
                 placeholder="Choisissez un mot de passe"
                 value={form.password}
                 onChange={f("password")}
-                style={{ width:"100%", padding:"11px 44px 11px 14px", background:"rgba(255,255,255,0.04)", border:`1px solid ${form.password&&form.password.length<6?"#F87171":"rgba(255,255,255,0.1)"}`, borderRadius:12, color:"#fff", fontSize:14, boxSizing:"border-box", outline:"none", fontFamily:"Georgia,serif" }}
+                style={{ width:"100%", padding:"11px 44px 11px 14px", background:"rgba(255,255,255,0.04)", border:`1px solid ${form.password&&form.password.length<6?"#F87171":"rgba(255,255,255,0.1)"}`, borderRadius:12, color:"#fff", fontSize:14, boxSizing:"border-box", outline:"none", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}
               />
               <button onClick={()=>setShowPw(!showPw)} style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:14 }}>
                 {showPw?"🙈":"👁"}
@@ -916,7 +916,7 @@ const RegisterScreen = ({ onBack }) => {
                   const strength = form.password.length >= 8 ? (
                     /[A-Z]/.test(form.password) ? (/[0-9]/.test(form.password) ? (/[^A-Za-z0-9]/.test(form.password) ? 4 : 3) : 2) : 2
                   ) : form.password.length >= 6 ? 1 : 0;
-                  return <div key={i} style={{ flex:1, height:3, borderRadius:2, background: i<=strength ? (strength<=1?"#F87171":strength<=2?"#F59E0B":strength<=3?"#60A5FA":"#34D399") : "rgba(255,255,255,0.08)", transition:"all .3s" }}/>;
+                  return <div key={i} style={{ flex:1, height:3, borderRadius:2, background: i<=strength ? (strength<=1?"#F87171":strength<=2?"#C9A84C":strength<=3?"#C9A84C":"#fff") : "rgba(255,255,255,0.08)", transition:"all .3s" }}/>;
                 })}
               </div>
               <div style={{ fontSize:9, color:"rgba(255,255,255,0.35)", textTransform:"uppercase", letterSpacing:"0.06em" }}>
@@ -945,7 +945,7 @@ const RegisterScreen = ({ onBack }) => {
             <div style={{ padding:"12px 16px",background:`${G}08`,border:`1px solid ${G}25`,borderRadius:14,marginBottom:12 }}>
               <div style={{ display:"flex",alignItems:"center",gap:12 }}>
                 <div style={{ width:44,height:44,borderRadius:12,background:`${G}15`,border:`1px solid ${G}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:G }}>{v.icon}</div>
-                <div><div style={{ fontWeight:700,color:"#fff",fontSize:14,fontFamily:"Georgia,serif" }}>{v.name}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:2 }}>{v.desc} · {v.cap}</div></div>
+                <div><div style={{ fontWeight:700,color:"#fff",fontSize:14,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{v.name}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:2 }}>{v.desc} · {v.cap}</div></div>
                 <div style={{ marginLeft:"auto",fontSize:9,padding:"3px 8px",borderRadius:10,background:`${G}15`,color:G,border:`1px solid ${G}25`,textTransform:"uppercase",letterSpacing:"0.06em" }}>{v.tag}</div>
               </div>
             </div>
@@ -1045,14 +1045,14 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
           to:      ["hamza.oubakrim@etu.isae-ensma.fr"], // Email de test — remplacer par chauffeur.email une fois le domaine vérifié
           subject: "Votre dossier Continental Limousines a été approuvé",
           html: `
-            <div style="background:#050505;color:#fff;font-family:Georgia,serif;padding:40px;max-width:520px;margin:0 auto;">
+            <div style="background:#050505;color:#fff;font-family:'Inter','SF Pro Display',-apple-system,sans-serif;padding:40px;max-width:520px;margin:0 auto;">
               <div style="text-align:center;margin-bottom:32px;">
                 <div style="font-size:64px;font-weight:700;color:#fff;letter-spacing:-3px;line-height:1;">CL</div>
                 <div style="font-size:11px;letter-spacing:0.2em;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-top:8px;">Continental Limousines</div>
                 <div style="width:60px;height:1px;background:linear-gradient(to right,transparent,#C9A84C,transparent);margin:14px auto 0;"></div>
               </div>
 
-              <div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.3);border-radius:14px;padding:20px;text-align:center;margin-bottom:28px;">
+              <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.3);border-radius:14px;padding:20px;text-align:center;margin-bottom:28px;">
                 <div style="font-size:28px;margin-bottom:8px;">✓</div>
                 <div style="font-size:18px;font-weight:700;color:#34D399;">Dossier approuvé</div>
               </div>
@@ -1154,10 +1154,10 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
   const StatusBadgeDossier = ({ s }) => {
     const cfg = {
       "en_attente": { color:"#C9A84C", bg:"rgba(201,168,76,0.12)", label:"En attente" },
-      "approuvé":   { color:"#34D399", bg:"rgba(52,211,153,0.12)",  label:"Approuvé"  },
+      "approuvé":   { color:"#fff", bg:"rgba(255,255,255,0.12)",  label:"Approuvé"  },
       "refusé":     { color:"#F87171", bg:"rgba(248,113,113,0.12)", label:"Refusé"    },
     }[s] || { color:"#888", bg:"rgba(128,128,128,0.1)", label:s };
-    return <span style={{ fontSize:9,fontWeight:700,letterSpacing:"0.1em",padding:"3px 9px",borderRadius:20,color:cfg.color,background:cfg.bg,border:`1px solid ${cfg.color}35`,textTransform:"uppercase",fontFamily:"Georgia,serif" }}>{cfg.label}</span>;
+    return <span style={{ fontSize:9,fontWeight:700,letterSpacing:"0.1em",padding:"3px 9px",borderRadius:20,color:cfg.color,background:cfg.bg,border:`1px solid ${cfg.color}35`,textTransform:"uppercase",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{cfg.label}</span>;
   };
 
   // Modal identifiants générés
@@ -1168,14 +1168,14 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin:"0 auto 12px",display:"block" }}>
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
-          <div style={{ fontFamily:"Georgia,serif",fontSize:18,fontWeight:700,color:"#fff",marginBottom:4 }}>Dossier approuvé</div>
+          <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:18,fontWeight:700,color:"#fff",marginBottom:4 }}>Dossier approuvé</div>
           <div style={{ fontSize:12,color:"rgba(255,255,255,0.4)" }}>{approved.nom}</div>
         </div>
 
         {/* Statut email */}
         <div style={{ padding:"14px 16px",borderRadius:14,marginBottom:16,
-          background: emailStatus==="sent" ? "rgba(52,211,153,0.08)" : emailStatus==="error" ? "rgba(248,113,113,0.08)" : "rgba(201,168,76,0.08)",
-          border: `1px solid ${emailStatus==="sent" ? "rgba(52,211,153,0.3)" : emailStatus==="error" ? "rgba(248,113,113,0.3)" : "rgba(201,168,76,0.25)"}`,
+          background: emailStatus==="sent" ? "rgba(255,255,255,0.08)" : emailStatus==="error" ? "rgba(248,113,113,0.08)" : "rgba(201,168,76,0.08)",
+          border: `1px solid ${emailStatus==="sent" ? "rgba(255,255,255,0.3)" : emailStatus==="error" ? "rgba(248,113,113,0.3)" : "rgba(201,168,76,0.25)"}`,
         }}>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
             {emailStatus==="sending" && (
@@ -1184,7 +1184,7 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
               </svg>
             )}
             {emailStatus==="sent" && (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             )}
@@ -1195,8 +1195,8 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
             )}
             <div>
               <div style={{ fontSize:12,fontWeight:700,
-                color: emailStatus==="sent"?"#34D399":emailStatus==="error"?"#F87171":G,
-                fontFamily:"Georgia,serif"
+                color: emailStatus==="sent"?"#fff":emailStatus==="error"?"#F87171":G,
+                fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif"
               }}>
                 {emailStatus==="sending" ? "Envoi de l'email…"
                  :emailStatus==="sent"    ? "Email envoyé avec succès"
@@ -1209,7 +1209,7 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
         </div>
 
         <div style={{ background:`${G}08`,border:`1px solid ${G}25`,borderRadius:14,padding:"16px",marginBottom:16 }}>
-          <div style={{ fontSize:10,color:`${G}80`,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8,fontFamily:"Georgia,serif" }}>Le chauffeur reçoit par email</div>
+          <div style={{ fontSize:10,color:`${G}80`,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>Le chauffeur reçoit par email</div>
           <div style={{ fontSize:12,color:"rgba(255,255,255,0.6)",lineHeight:1.7 }}>
             — Confirmation d'approbation<br/>
             — Ses informations (véhicule, plaque)<br/>
@@ -1232,15 +1232,15 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
     <div>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
         <SecTitle sub={`${dossiers.filter(d=>d.statut==="en_attente").length} en attente de validation`}>Dossiers chauffeurs</SecTitle>
-        <button onClick={loadDossiers} style={{ background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"6px 12px",color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif" }}>
+        <button onClick={loadDossiers} style={{ background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"6px 12px",color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>
           Actualiser
         </button>
       </div>
 
-      {loading && <div style={{ textAlign:"center",color:"rgba(255,255,255,0.2)",padding:"40px 0",fontFamily:"Georgia,serif" }}>Chargement…</div>}
+      {loading && <div style={{ textAlign:"center",color:"rgba(255,255,255,0.2)",padding:"40px 0",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>Chargement…</div>}
 
       {!loading && dossiers.length===0 && (
-        <div style={{ textAlign:"center",color:"rgba(255,255,255,0.2)",padding:"40px 0",fontFamily:"Georgia,serif" }}>
+        <div style={{ textAlign:"center",color:"rgba(255,255,255,0.2)",padding:"40px 0",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>
           <div style={{ fontSize:32,marginBottom:12,opacity:.3 }}>◆</div>
           <div>Aucune inscription reçue pour l'instant</div>
         </div>
@@ -1253,7 +1253,7 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
             <div style={{ display:"flex",gap:10,alignItems:"center" }}>
               <Av txt={`${(d.prenom||"?").charAt(0)}${(d.nom||"?").charAt(0)}`} size={40}/>
               <div>
-                <div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:15,color:"#fff" }}>{d.prenom} {d.nom}</div>
+                <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontWeight:700,fontSize:15,color:"#fff" }}>{d.prenom} {d.nom}</div>
                 <div style={{ fontSize:11,color:`${G}80`,marginTop:2 }}>{d.vehicule} · {d.plaque}</div>
               </div>
             </div>
@@ -1271,7 +1271,7 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
               ["Expiration",d.permis_exp||"—"],
             ].map(([k,v])=>(
               <div key={k} style={{ background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"8px 10px" }}>
-                <div style={{ fontSize:9,color:`${G}60`,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3,fontFamily:"Georgia,serif" }}>{k}</div>
+                <div style={{ fontSize:9,color:`${G}60`,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{k}</div>
                 <div style={{ fontSize:12,color:"#fff",fontWeight:600,wordBreak:"break-all" }}>{v}</div>
               </div>
             ))}
@@ -1285,7 +1285,7 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
               </svg>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:12,fontWeight:700,color:G,fontFamily:"Georgia,serif" }}>Carte professionnelle VTC</div>
+                <div style={{ fontSize:12,fontWeight:700,color:G,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>Carte professionnelle VTC</div>
                 <div style={{ fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:1 }}>Appuyer pour ouvrir le document</div>
               </div>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1296,8 +1296,8 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
 
           {/* Identifiants générés si déjà approuvé */}
           {d.statut==="approuvé" && d.email_genere && (
-            <div style={{ padding:"10px 12px",background:"rgba(52,211,153,0.06)",border:"1px solid rgba(52,211,153,0.2)",borderRadius:12,marginBottom:12 }}>
-              <div style={{ fontSize:9,color:"#34D399",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6,fontFamily:"Georgia,serif" }}>Identifiants transmis</div>
+            <div style={{ padding:"10px 12px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:12,marginBottom:12 }}>
+              <div style={{ fontSize:9,color:"#fff",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>Identifiants transmis</div>
               <div style={{ fontSize:11,color:"rgba(255,255,255,0.6)" }}>{d.email_genere}</div>
               <div style={{ fontSize:11,color:"rgba(255,255,255,0.6)",marginTop:2 }}>{d.mdp_genere}</div>
             </div>
@@ -1334,8 +1334,26 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter]     = useState("all");
   const [search, setSearch]     = useState("");
+  const [titleType, setTitleType] = useState("");
   const [form, setForm]         = useState({ title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",distance:"",notes:"" });
   const g = k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+
+  const TITLE_OPTIONS = [
+    { value:"Transfert Aéroport",    label:"Transfert Aéroport" },
+    { value:"Transfert Gare",        label:"Transfert Gare" },
+    { value:"Mise à disposition 4h", label:"Mise à disposition 4h" },
+    { value:"Mise à disposition 8h", label:"Mise à disposition 8h" },
+    { value:"Mise à disposition 12h",label:"Mise à disposition 12h" },
+    { value:"Mise à disposition — Journée complète", label:"Mise à disposition — Journée complète" },
+    { value:"autre",                 label:"Autre (saisir manuellement)" },
+  ];
+
+  const handleTitleType = (e) => {
+    const val = e.target.value;
+    setTitleType(val);
+    if (val !== "autre") setForm(p => ({...p, title: val}));
+    else setForm(p => ({...p, title: ""}));
+  };
 
   const SUPABASE_URL      = "https://oiksltqjynwfxvvldflt.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
@@ -1353,25 +1371,47 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
     if (ok) {
       sendPushNotif("Nouvelle mission publiée", form.title, "VTC");
       setForm({title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",distance:"",notes:""});
+      setTitleType("");
       setShowForm(false);
       showToast("Mission publiée ✦");
     }
   };
 
   const revenue=missions.filter(m=>m.status==="completed").reduce((a,m)=>a+m.price,0);
-  const kpis=[{label:"Missions",val:missions.length,color:G},{label:"En attente",val:missions.filter(m=>m.status==="pending").length,color:"#C9A84C"},{label:"En cours",val:missions.filter(m=>["accepted","assigned"].includes(m.status)).length,color:"#60A5FA"},{label:"CA",val:`${revenue}€`,color:"#34D399"}];
+  const kpis=[{label:"Missions",val:missions.length,color:G},{label:"En attente",val:missions.filter(m=>m.status==="pending").length,color:"#C9A84C"},{label:"En cours",val:missions.filter(m=>["accepted","assigned"].includes(m.status)).length,color:"#C9A84C"},{label:"CA",val:`${revenue}€`,color:"#fff"}];
 
   return <div>
     <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20 }}>
       {kpis.map(k=><div key={k.label} style={{ background:"rgba(255,255,255,0.025)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"14px 16px",textAlign:"center" }}>
-        <div style={{ fontSize:22,fontWeight:700,color:k.color,fontFamily:"Georgia,serif",lineHeight:1 }}>{k.val}</div>
+        <div style={{ fontSize:22,fontWeight:700,color:k.color,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",lineHeight:1 }}>{k.val}</div>
         <div style={{ fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.1em" }}>{k.label}</div>
       </div>)}
     </div>
     <Btn onClick={()=>setShowForm(!showForm)} style={{ marginBottom:14 }}>{showForm?"✕  Annuler":"Nouvelle mission"}</Btn>
     {showForm&&<Card glow style={{ marginBottom:18 }}>
       <SecTitle icon="✦">Créer une mission</SecTitle>
-      <Inp label="Intitulé" placeholder="Transfert VIP CDG → Le Bristol" value={form.title} onChange={g("title")}/>
+
+      {/* Type de mission */}
+      <div style={{ marginBottom:12 }}>
+        <div style={{ fontSize:9,color:`${G}90`,marginBottom:5,textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>Type de mission</div>
+        <select value={titleType} onChange={handleTitleType}
+          style={{ width:"100%",padding:"11px 14px",background:"#0d0d0d",border:`1px solid ${titleType?"rgba(201,168,76,0.4)":"rgba(255,255,255,0.1)"}`,borderRadius:12,color:titleType?"#fff":"rgba(255,255,255,0.4)",fontSize:14,boxSizing:"border-box",outline:"none",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>
+          <option value="">— Sélectionner un type —</option>
+          {TITLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </div>
+
+      {/* Champ libre si "Autre" */}
+      {titleType==="autre" && (
+        <Inp label="Intitulé personnalisé" placeholder="ex : Soirée privée, Transfert hôtel…" value={form.title} onChange={g("title")}/>
+      )}
+
+      {/* Aperçu intitulé */}
+      {form.title && titleType !== "autre" && (
+        <div style={{ padding:"10px 14px",background:`${G}08`,border:`1px solid ${G}25`,borderRadius:12,marginBottom:12,fontSize:13,color:G,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontWeight:700 }}>
+          {form.title}
+        </div>
+      )}
       <Inp label="Client" placeholder="M. Laurent Dupont" value={form.client} onChange={g("client")}/>
       <Inp label="Adresse de départ" placeholder="CDG Terminal 2E, Roissy" value={form.pickup} onChange={g("pickup")}/>
       <Inp label="Adresse d'arrivée" placeholder="Hôtel Le Bristol, Paris 8e" value={form.dropoff} onChange={g("dropoff")}/>
@@ -1384,13 +1424,13 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
     <Inp placeholder="🔍  Rechercher…" value={search} onChange={e=>setSearch(e.target.value)}/>
     <div style={{ display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4 }}>
       {[["all","Toutes"],["pending","Attente"],["accepted","Acceptées"],["assigned","Way-Plan"],["completed","Terminées"],["refused","Refusées"]].map(([v,l])=>(
-        <button key={v} onClick={()=>setFilter(v)} style={{ padding:"6px 14px",borderRadius:20,border:"1px solid",borderColor:filter===v?G:"rgba(255,255,255,0.1)",background:filter===v?`${G}15`:"transparent",color:filter===v?G:"rgba(255,255,255,0.45)",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"Georgia,serif",letterSpacing:"0.04em",transition:"all .2s" }}>{l}</button>
+        <button key={v} onClick={()=>setFilter(v)} style={{ padding:"6px 14px",borderRadius:20,border:"1px solid",borderColor:filter===v?G:"rgba(255,255,255,0.1)",background:filter===v?`${G}15`:"transparent",color:filter===v?G:"rgba(255,255,255,0.45)",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",letterSpacing:"0.04em",transition:"all .2s" }}>{l}</button>
       ))}
     </div>
-    {filtered.length===0&&<div style={{ textAlign:"center",color:"rgba(255,255,255,0.2)",padding:"40px 0",fontFamily:"Georgia,serif" }}>Aucune mission</div>}
+    {filtered.length===0&&<div style={{ textAlign:"center",color:"rgba(255,255,255,0.2)",padding:"40px 0",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>Aucune mission</div>}
     {filtered.map(m=>{const drv=drivers.find(d=>d.id===m.driverId); return(
       <Card key={m.id}>
-        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:7 }}><div style={{ fontWeight:700,fontSize:14,color:"#fff",flex:1,marginRight:10,fontFamily:"Georgia,serif",lineHeight:1.4 }}>{m.title}</div><Badge status={m.status}/></div>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:7 }}><div style={{ fontWeight:700,fontSize:14,color:"#fff",flex:1,marginRight:10,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",lineHeight:1.4 }}>{m.title}</div><Badge status={m.status}/></div>
         {m.client&&<div style={{ fontSize:12,color:`${G}90`,marginBottom:7,fontStyle:"italic" }}>— {m.client}</div>}
         <div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{m.pickup}</div>
         <div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:8 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{m.dropoff}</div>
@@ -1398,7 +1438,7 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
           <span>{m.date} · {m.time}</span><span style={{ color:G,fontWeight:700 }}>{m.price} €</span>{m.distance&&<span>{m.distance}</span>}<span style={{ color:"rgba(255,255,255,0.25)" }}>{m.vehicle}</span>
         </div>
         {m.notes&&<div style={{ fontSize:11,color:"rgba(255,255,255,0.3)",fontStyle:"italic",marginTop:8,borderTop:"1px solid rgba(255,255,255,0.05)",paddingTop:8 }}>Note : {m.notes}</div>}
-        {drv&&<div style={{ marginTop:10,display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:`${G}08`,borderRadius:12,border:`1px solid ${G}20` }}><Av txt={drv.avatar} size={30}/><div><div style={{ fontSize:12,fontWeight:700,color:G,fontFamily:"Georgia,serif" }}>{drv.name}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)" }}>{drv.vehicle} · {drv.plate}</div></div><div style={{ marginLeft:"auto" }}><Dot on={drv.status==="available"}/></div></div>}
+        {drv&&<div style={{ marginTop:10,display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:`${G}08`,borderRadius:12,border:`1px solid ${G}20` }}><Av txt={drv.avatar} size={30}/><div><div style={{ fontSize:12,fontWeight:700,color:G,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{drv.name}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)" }}>{drv.vehicle} · {drv.plate}</div></div><div style={{ marginLeft:"auto" }}><Dot on={drv.status==="available"}/></div></div>}
       </Card>
     );})}
   </div>;
@@ -1424,34 +1464,34 @@ const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages,
 
   if (tab==="fleet") return <div>
     <SecTitle icon="▲" sub="Statut en temps réel">Flotte Continental Limousines</SecTitle>
-    {drivers.map(d=><Card key={d.id}><div style={{ display:"flex",gap:14,alignItems:"center" }}><Av txt={d.avatar} size={46}/><div style={{ flex:1 }}><div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:15,color:"#fff" }}>{d.name}</div><div style={{ fontSize:12,color:G,marginTop:2 }}>{d.vehicle} · {d.plate}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2 }}>★ {d.rating} · {d.trips} missions · {d.phone}</div></div><div style={{ textAlign:"center" }}><Dot on={d.status==="available"}/><div style={{ fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:5,textTransform:"uppercase",letterSpacing:"0.05em" }}>{d.status==="available"?"Dispo":"En course"}</div></div></div><Divider/><div style={{ display:"flex",gap:16,flexWrap:"wrap" }}>{[["Permis",d.license],["Exp.",d.licenseExp]].map(([k,v])=><div key={k} style={{ fontSize:11,color:"rgba(255,255,255,0.35)" }}><span style={{ color:`${G}70`,fontSize:9,textTransform:"uppercase",letterSpacing:"0.06em" }}>{k} </span>{v}</div>)}</div></Card>)}
+    {drivers.map(d=><Card key={d.id}><div style={{ display:"flex",gap:14,alignItems:"center" }}><Av txt={d.avatar} size={46}/><div style={{ flex:1 }}><div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontWeight:700,fontSize:15,color:"#fff" }}>{d.name}</div><div style={{ fontSize:12,color:G,marginTop:2 }}>{d.vehicle} · {d.plate}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2 }}>★ {d.rating} · {d.trips} missions · {d.phone}</div></div><div style={{ textAlign:"center" }}><Dot on={d.status==="available"}/><div style={{ fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:5,textTransform:"uppercase",letterSpacing:"0.05em" }}>{d.status==="available"?"Dispo":"En course"}</div></div></div><Divider/><div style={{ display:"flex",gap:16,flexWrap:"wrap" }}>{[["Permis",d.license],["Exp.",d.licenseExp]].map(([k,v])=><div key={k} style={{ fontSize:11,color:"rgba(255,255,255,0.35)" }}><span style={{ color:`${G}70`,fontSize:9,textTransform:"uppercase",letterSpacing:"0.06em" }}>{k} </span>{v}</div>)}</div></Card>)}
   </div>;
 
   return <div>
-    <div style={{ fontFamily:"Georgia,serif",fontSize:20,fontWeight:700,color:"#fff",marginBottom:4 }}>Dispatch Center</div>
+    <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:20,fontWeight:700,color:"#fff",marginBottom:4 }}>Dispatch Center</div>
     <div style={{ fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20 }}>{accepted.length} à dispatcher · {assigned.length} sur Way-Plan</div>
     <SecTitle sub="Disponibilité en direct">Chauffeurs</SecTitle>
     <div style={{ display:"flex",gap:8,overflowX:"auto",paddingBottom:10,marginBottom:20 }}>
       {drivers.map(d=><div key={d.id} style={{ background:"rgba(255,255,255,0.025)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"14px",minWidth:130,flexShrink:0,textAlign:"center" }}>
-        <Av txt={d.avatar} size={38}/><div style={{ fontFamily:"Georgia,serif",fontSize:12,fontWeight:700,color:"#fff",marginTop:8 }}>{d.name.split(" ")[0]}</div><div style={{ fontSize:10,color:`${G}80`,marginTop:2 }}>{d.vehicle}</div>
-        <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:5,marginTop:7 }}><Dot on={d.status==="available"}/><span style={{ fontSize:9,color:d.status==="available"?"#34D399":"#F59E0B",textTransform:"uppercase",letterSpacing:"0.05em" }}>{d.status==="available"?"Dispo":"En course"}</span></div>
+        <Av txt={d.avatar} size={38}/><div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:12,fontWeight:700,color:"#fff",marginTop:8 }}>{d.name.split(" ")[0]}</div><div style={{ fontSize:10,color:`${G}80`,marginTop:2 }}>{d.vehicle}</div>
+        <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:5,marginTop:7 }}><Dot on={d.status==="available"}/><span style={{ fontSize:9,color:d.status==="available"?"#fff":"#C9A84C",textTransform:"uppercase",letterSpacing:"0.05em" }}>{d.status==="available"?"Dispo":"En course"}</span></div>
       </div>)}
     </div>
     <SecTitle icon="◈" sub="Missions acceptées par les chauffeurs">À envoyer sur Way-Plan</SecTitle>
-    {accepted.length===0&&<div style={{ textAlign:"center",color:"rgba(255,255,255,0.2)",padding:"30px 0",fontFamily:"Georgia,serif",fontSize:13 }}>Aucune mission en attente</div>}
+    {accepted.length===0&&<div style={{ textAlign:"center",color:"rgba(255,255,255,0.2)",padding:"30px 0",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:13 }}>Aucune mission en attente</div>}
     {accepted.map(m=>{ const drv=drivers.find(d=>d.id===m.driverId); return(
-      <Card key={m.id} style={{ border:"1px solid rgba(96,165,250,0.2)" }}>
-        <div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:14,color:"#fff",marginBottom:5 }}>{m.title}</div>
+      <Card key={m.id} style={{ border:"1px solid rgba(201,168,76,0.2)" }}>
+        <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontWeight:700,fontSize:14,color:"#fff",marginBottom:5 }}>{m.title}</div>
         {m.client&&<div style={{ fontSize:12,color:`${G}90`,marginBottom:7 }}>— {m.client}</div>}
         <div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{m.pickup}</div>
         <div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:10 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{m.dropoff}</div>
         <div style={{ display:"flex",gap:12,fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:12 }}><span>{m.date} · {m.time}</span><span style={{ color:G,fontWeight:700 }}>{m.price} €</span><span>{m.vehicle}</span></div>
-        {drv&&<div style={{ display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"rgba(255,255,255,0.03)",borderRadius:12,marginBottom:10 }}><Av txt={drv.avatar} size={30}/><div><div style={{ fontSize:12,fontWeight:700,color:"#fff",fontFamily:"Georgia,serif" }}>{drv.name}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)" }}>★ {drv.rating} · {drv.vehicle} · {drv.plate}</div></div></div>}
+        {drv&&<div style={{ display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"rgba(255,255,255,0.03)",borderRadius:12,marginBottom:10 }}><Av txt={drv.avatar} size={30}/><div><div style={{ fontSize:12,fontWeight:700,color:"#fff",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{drv.name}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)" }}>★ {drv.rating} · {drv.vehicle} · {drv.plate}</div></div></div>}
         <Sel label="Réassigner si besoin" value={m.driverId||""} onChange={e=>reassign(m.id,e.target.value)}>{drivers.filter(d=>d.status==="available").map(d=><option key={d.id} value={d.id}>{d.name} · {d.vehicle} · {d.plate}</option>)}</Sel>
         <Btn onClick={()=>sendWP(m.id)}>Envoyer sur Way-Plan</Btn>
       </Card>
     );})}
-    {assigned.length>0&&<div style={{ marginTop:24 }}><SecTitle icon="✦">Sur Way-Plan</SecTitle>{assigned.map(m=>{ const drv=drivers.find(d=>d.id===m.driverId); return(<Card key={m.id} style={{ border:"1px solid rgba(167,139,250,0.2)",background:"rgba(167,139,250,0.04)" }}><div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}><div><div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:13,color:"#fff" }}>{m.title}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:4 }}>{drv?`${drv.name} · ${drv.plate}`:"—"} · {m.date} · {m.time}</div></div><Badge status="assigned"/></div></Card>);})}</div>}
+    {assigned.length>0&&<div style={{ marginTop:24 }}><SecTitle icon="✦">Sur Way-Plan</SecTitle>{assigned.map(m=>{ const drv=drivers.find(d=>d.id===m.driverId); return(<Card key={m.id} style={{ border:"1px solid rgba(255,255,255,0.2)",background:"rgba(255,255,255,0.04)" }}><div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}><div><div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontWeight:700,fontSize:13,color:"#fff" }}>{m.title}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:4 }}>{drv?`${drv.name} · ${drv.plate}`:"—"} · {m.date} · {m.time}</div></div><Badge status="assigned"/></div></Card>);})}</div>}
   </div>;
 };
 
@@ -1494,31 +1534,31 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, cur
   if (tab==="map") return <div>
     <SecTitle sub="Ma position & trajet">Carte GPS</SecTitle>
     <MapView mission={active[0]} drivers={drivers} standalone/>
-    {active.length>0&&<Card glow style={{ marginTop:14 }}><div style={{ fontSize:13,fontWeight:700,color:"#fff",fontFamily:"Georgia,serif",marginBottom:6 }}>{active[0].title}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)" }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{active[0].pickup}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)",marginTop:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{active[0].dropoff}</div></Card>}
+    {active.length>0&&<Card glow style={{ marginTop:14 }}><div style={{ fontSize:13,fontWeight:700,color:"#fff",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",marginBottom:6 }}>{active[0].title}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)" }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{active[0].pickup}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)",marginTop:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{active[0].dropoff}</div></Card>}
   </div>;
 
   if (tab==="profile") return <div>
     <Card glow style={{ marginBottom:20 }}>
-      <div style={{ display:"flex",gap:14,alignItems:"center",marginBottom:16 }}><Av txt={driver.avatar} size={58}/><div><div style={{ fontFamily:"Georgia,serif",fontSize:18,fontWeight:700,color:"#fff" }}>{driver.name}</div><div style={{ fontSize:12,color:G,marginTop:3 }}>★ {driver.rating} · {driver.trips} missions</div><div style={{ display:"flex",alignItems:"center",gap:6,marginTop:5 }}><Dot on={driver.status==="available"}/><span style={{ fontSize:11,color:"rgba(255,255,255,0.4)" }}>{driver.status==="available"?"Disponible":"En course"}</span></div></div></div>
+      <div style={{ display:"flex",gap:14,alignItems:"center",marginBottom:16 }}><Av txt={driver.avatar} size={58}/><div><div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:18,fontWeight:700,color:"#fff" }}>{driver.name}</div><div style={{ fontSize:12,color:G,marginTop:3 }}>★ {driver.rating} · {driver.trips} missions</div><div style={{ display:"flex",alignItems:"center",gap:6,marginTop:5 }}><Dot on={driver.status==="available"}/><span style={{ fontSize:11,color:"rgba(255,255,255,0.4)" }}>{driver.status==="available"?"Disponible":"En course"}</span></div></div></div>
       <Divider/>
-      {[["Véhicule",driver.vehicle],["Immatriculation",driver.plate],["N° Permis",driver.license],["Exp. permis",driver.licenseExp],["Téléphone",driver.phone]].map(([k,v])=><div key={k} style={{ display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.04)" }}><span style={{ fontSize:11,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:"Georgia,serif" }}>{k}</span><span style={{ fontSize:12,color:"#fff",fontWeight:600 }}>{v}</span></div>)}
+      {[["Véhicule",driver.vehicle],["Immatriculation",driver.plate],["N° Permis",driver.license],["Exp. permis",driver.licenseExp],["Téléphone",driver.phone]].map(([k,v])=><div key={k} style={{ display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.04)" }}><span style={{ fontSize:11,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{k}</span><span style={{ fontSize:12,color:"#fff",fontWeight:600 }}>{v}</span></div>)}
     </Card>
     <SecTitle icon="▲">Mon véhicule</SecTitle>
-    {(()=>{ const v=VEHICLES.find(x=>x.name===driver.vehicle); return v?(<Card><div style={{ display:"flex",alignItems:"center",gap:14 }}><div style={{ width:50,height:50,borderRadius:14,background:`${G}15`,border:`1px solid ${G}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:G }}>{v.icon}</div><div><div style={{ fontWeight:700,color:"#fff",fontFamily:"Georgia,serif",fontSize:15 }}>{v.name}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:3 }}>{v.desc} · {v.cap}</div></div><div style={{ marginLeft:"auto",fontSize:9,padding:"3px 8px",borderRadius:10,background:`${G}15`,color:G,border:`1px solid ${G}25`,textTransform:"uppercase",letterSpacing:"0.06em" }}>{v.tag}</div></div></Card>):null; })()}
+    {(()=>{ const v=VEHICLES.find(x=>x.name===driver.vehicle); return v?(<Card><div style={{ display:"flex",alignItems:"center",gap:14 }}><div style={{ width:50,height:50,borderRadius:14,background:`${G}15`,border:`1px solid ${G}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:G }}>{v.icon}</div><div><div style={{ fontWeight:700,color:"#fff",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:15 }}>{v.name}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:3 }}>{v.desc} · {v.cap}</div></div><div style={{ marginLeft:"auto",fontSize:9,padding:"3px 8px",borderRadius:10,background:`${G}15`,color:G,border:`1px solid ${G}25`,textTransform:"uppercase",letterSpacing:"0.06em" }}>{v.tag}</div></div></Card>):null; })()}
   </div>;
 
   return <div>
     <Card glow style={{ marginBottom:20 }}>
-      <div style={{ display:"flex",gap:12,alignItems:"center" }}><Av txt={driver.avatar} size={50}/><div style={{ flex:1 }}><div style={{ fontFamily:"Georgia,serif",fontSize:16,fontWeight:700,color:"#fff" }}>{driver.name}</div><div style={{ fontSize:12,color:G,marginTop:2 }}>★ {driver.rating} · {driver.vehicle} · {driver.plate}</div></div><div style={{ textAlign:"center" }}><Dot on={driver.status==="available"}/><div style={{ fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:5,textTransform:"uppercase",letterSpacing:"0.05em" }}>{driver.status==="available"?"Dispo":"En course"}</div></div></div>
+      <div style={{ display:"flex",gap:12,alignItems:"center" }}><Av txt={driver.avatar} size={50}/><div style={{ flex:1 }}><div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:16,fontWeight:700,color:"#fff" }}>{driver.name}</div><div style={{ fontSize:12,color:G,marginTop:2 }}>★ {driver.rating} · {driver.vehicle} · {driver.plate}</div></div><div style={{ textAlign:"center" }}><Dot on={driver.status==="available"}/><div style={{ fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:5,textTransform:"uppercase",letterSpacing:"0.05em" }}>{driver.status==="available"?"Dispo":"En course"}</div></div></div>
     </Card>
 
     {available.length>0&&<div style={{ marginBottom:20 }}>
       <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:12 }}>
         <div style={{ width:8,height:8,borderRadius:"50%",background:G,boxShadow:`0 0 10px ${G}`,animation:"pulse 1.5s infinite" }}/>
-        <div style={{ fontSize:11,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"Georgia,serif" }}>{available.length} mission{available.length>1?"s":""} disponible{available.length>1?"s":""}</div>
+        <div style={{ fontSize:11,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{available.length} mission{available.length>1?"s":""} disponible{available.length>1?"s":""}</div>
       </div>
       {available.map(m=><Card key={m.id} glow>
-        <div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:15,color:"#fff",marginBottom:5 }}>{m.title}</div>
+        <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontWeight:700,fontSize:15,color:"#fff",marginBottom:5 }}>{m.title}</div>
         {m.client&&<div style={{ fontSize:12,color:`${G}90`,marginBottom:8 }}>— {m.client}</div>}
         <div style={{ fontSize:12,color:"rgba(255,255,255,0.5)",marginBottom:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{m.pickup}</div>
         <div style={{ fontSize:12,color:"rgba(255,255,255,0.5)",marginBottom:10 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{m.dropoff}</div>
@@ -1528,7 +1568,7 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, cur
       </Card>)}
     </div>}
 
-    {available.length===0&&myMissions.length===0&&<div style={{ textAlign:"center",padding:"50px 20px",color:"rgba(255,255,255,0.2)",fontFamily:"Georgia,serif" }}><div style={{ fontSize:36,marginBottom:12,opacity:.3 }}>◆</div><div style={{ fontSize:14,marginBottom:8 }}>Aucune mission disponible</div><div style={{ fontSize:12 }}>Vous serez alerté dès qu'une mission {driver.vehicle} est publiée</div></div>}
+    {available.length===0&&myMissions.length===0&&<div style={{ textAlign:"center",padding:"50px 20px",color:"rgba(255,255,255,0.2)",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}><div style={{ fontSize:36,marginBottom:12,opacity:.3 }}>◆</div><div style={{ fontSize:14,marginBottom:8 }}>Aucune mission disponible</div><div style={{ fontSize:12 }}>Vous serez alerté dès qu'une mission {driver.vehicle} est publiée</div></div>}
 
     {active.length>0&&<>
       <SecTitle icon="◆">Missions actives</SecTitle>
@@ -1554,15 +1594,15 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, cur
           {
             name: "Plans",
             icon: "A",
-            color: "#34D399",
-            bg: "rgba(52,211,153,0.12)",
+            color: "#fff",
+            bg: "rgba(255,255,255,0.12)",
             url: `http://maps.apple.com/?saddr=${origin}&daddr=${dest}&dirflg=d`,
           },
         ];
         return (
           <Card key={m.id} glow>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8 }}>
-              <div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:14,color:"#fff",flex:1,marginRight:10 }}>{m.title}</div>
+              <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontWeight:700,fontSize:14,color:"#fff",flex:1,marginRight:10 }}>{m.title}</div>
               <Badge status={m.status}/>
             </div>
             {m.client&&<div style={{ fontSize:12,color:`${G}90`,marginBottom:8 }}>— {m.client}</div>}
@@ -1580,7 +1620,7 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, cur
 
             {/* Boutons GPS */}
             <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:12,marginTop:4 }}>
-              <div style={{ fontSize:9,color:`${G}70`,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"Georgia,serif",marginBottom:10 }}>
+              <div style={{ fontSize:9,color:`${G}70`,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",marginBottom:10 }}>
                 Naviguer vers le client
               </div>
               <div style={{ display:"flex",gap:8 }}>
@@ -1592,10 +1632,10 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, cur
                     rel="noreferrer"
                     style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"10px 8px",background:app.bg,border:`1px solid ${app.color}35`,borderRadius:12,textDecoration:"none",transition:"all .2s" }}
                   >
-                    <div style={{ width:32,height:32,borderRadius:"50%",background:`${app.color}20`,border:`1.5px solid ${app.color}60`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:app.color,fontFamily:"Georgia,serif" }}>
+                    <div style={{ width:32,height:32,borderRadius:"50%",background:`${app.color}20`,border:`1.5px solid ${app.color}60`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:app.color,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>
                       {app.icon}
                     </div>
-                    <div style={{ fontSize:10,color:app.color,fontWeight:600,fontFamily:"Georgia,serif",letterSpacing:"0.03em" }}>{app.name}</div>
+                    <div style={{ fontSize:10,color:app.color,fontWeight:600,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",letterSpacing:"0.03em" }}>{app.name}</div>
                   </a>
                 ))}
               </div>
@@ -1605,7 +1645,7 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, cur
       })}
     </>}
 
-    {myMissions.filter(m=>!["accepted","assigned"].includes(m.status)).length>0&&<><SecTitle icon="●">Historique</SecTitle>{myMissions.filter(m=>!["accepted","assigned"].includes(m.status)).map(m=><Card key={m.id}><div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}><div><div style={{ fontFamily:"Georgia,serif",fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.65)" }}>{m.title.split("–")[0].trim()}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:3 }}>{m.date} · <span style={{ color:`${G}80` }}>{m.price} €</span></div></div><Badge status={m.status}/></div></Card>)}</>}
+    {myMissions.filter(m=>!["accepted","assigned"].includes(m.status)).length>0&&<><SecTitle icon="●">Historique</SecTitle>{myMissions.filter(m=>!["accepted","assigned"].includes(m.status)).map(m=><Card key={m.id}><div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}><div><div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.65)" }}>{m.title.split("–")[0].trim()}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:3 }}>{m.date} · <span style={{ color:`${G}80` }}>{m.price} €</span></div></div><Badge status={m.status}/></div></Card>)}</>}
     <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
   </div>;
 };
@@ -1617,19 +1657,19 @@ const ClientView = ({ missions, drivers, currentUser, tab }) => {
   const myMissions = missions.filter(m=>m.clientId===currentUser.clientId);
   const activeM    = myMissions.find(m=>["accepted","assigned"].includes(m.status));
 
-  if (tab==="map") return <div><SecTitle sub="Votre course en temps réel">Carte GPS</SecTitle><MapView mission={activeM} drivers={drivers} standalone/>{activeM?<Card glow style={{ marginTop:14 }}><div style={{ fontSize:13,fontWeight:700,color:"#fff",fontFamily:"Georgia,serif",marginBottom:6 }}>{activeM.title}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)" }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{activeM.pickup}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)",marginTop:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{activeM.dropoff}</div></Card>:<div style={{ textAlign:"center",padding:"30px 0",color:"rgba(255,255,255,0.2)",fontFamily:"Georgia,serif",fontSize:13 }}>Aucune course en cours</div>}</div>;
+  if (tab==="map") return <div><SecTitle sub="Votre course en temps réel">Carte GPS</SecTitle><MapView mission={activeM} drivers={drivers} standalone/>{activeM?<Card glow style={{ marginTop:14 }}><div style={{ fontSize:13,fontWeight:700,color:"#fff",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",marginBottom:6 }}>{activeM.title}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)" }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{activeM.pickup}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)",marginTop:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{activeM.dropoff}</div></Card>:<div style={{ textAlign:"center",padding:"30px 0",color:"rgba(255,255,255,0.2)",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:13 }}>Aucune course en cours</div>}</div>;
 
-  if (tab==="vehicles") return <div><SecTitle icon="★" sub="Flotte Continental Limousines">Nos véhicules</SecTitle>{VEHICLES.map(v=><Card key={v.name}><div style={{ display:"flex",alignItems:"center",gap:14 }}><div style={{ width:50,height:50,borderRadius:14,background:`${G}15`,border:`1px solid ${G}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:G }}>{v.icon}</div><div style={{ flex:1 }}><div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:14,color:"#fff" }}>{v.name}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:2 }}>{v.desc} · {v.cap}</div></div><div style={{ fontSize:9,padding:"4px 9px",borderRadius:12,background:`${G}15`,color:G,border:`1px solid ${G}25`,textTransform:"uppercase",letterSpacing:"0.06em" }}>{v.tag}</div></div></Card>)}</div>;
+  if (tab==="vehicles") return <div><SecTitle icon="★" sub="Flotte Continental Limousines">Nos véhicules</SecTitle>{VEHICLES.map(v=><Card key={v.name}><div style={{ display:"flex",alignItems:"center",gap:14 }}><div style={{ width:50,height:50,borderRadius:14,background:`${G}15`,border:`1px solid ${G}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:G }}>{v.icon}</div><div style={{ flex:1 }}><div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontWeight:700,fontSize:14,color:"#fff" }}>{v.name}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:2 }}>{v.desc} · {v.cap}</div></div><div style={{ fontSize:9,padding:"4px 9px",borderRadius:12,background:`${G}15`,color:G,border:`1px solid ${G}25`,textTransform:"uppercase",letterSpacing:"0.06em" }}>{v.tag}</div></div></Card>)}</div>;
 
   return <div>
     <Card glow style={{ marginBottom:22 }}>
-      <div style={{ display:"flex",gap:14,alignItems:"center" }}><Av txt={currentUser.avatar} size={52}/><div><div style={{ fontFamily:"Georgia,serif",fontSize:17,fontWeight:700,color:"#fff" }}>{currentUser.name}</div><div style={{ fontSize:12,color:G,marginTop:3 }}>★ Client VIP · Compte Premium</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2 }}>Service 24h/24 · 7j/7</div></div></div>
+      <div style={{ display:"flex",gap:14,alignItems:"center" }}><Av txt={currentUser.avatar} size={52}/><div><div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:17,fontWeight:700,color:"#fff" }}>{currentUser.name}</div><div style={{ fontSize:12,color:G,marginTop:3 }}>★ Client VIP · Compte Premium</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2 }}>Service 24h/24 · 7j/7</div></div></div>
     </Card>
     <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:22 }}>
-      {[["📞","Standard","+33 1 85 400 102"],["✉️","Email","contact@continental-limousines.fr"]].map(([ic,lbl,val])=><div key={lbl} style={{ padding:"14px 12px",background:"rgba(255,255,255,0.025)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,textAlign:"center" }}><div style={{ fontSize:20,marginBottom:5 }}>{ic}</div><div style={{ fontSize:9,color:`${G}70`,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"Georgia,serif",marginBottom:4 }}>{lbl}</div><div style={{ fontSize:11,color:"#fff",fontWeight:600,wordBreak:"break-all" }}>{val}</div></div>)}
+      {[["📞","Standard","+33 1 85 400 102"],["✉️","Email","contact@continental-limousines.fr"]].map(([ic,lbl,val])=><div key={lbl} style={{ padding:"14px 12px",background:"rgba(255,255,255,0.025)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,textAlign:"center" }}><div style={{ fontSize:20,marginBottom:5 }}>{ic}</div><div style={{ fontSize:9,color:`${G}70`,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",marginBottom:4 }}>{lbl}</div><div style={{ fontSize:11,color:"#fff",fontWeight:600,wordBreak:"break-all" }}>{val}</div></div>)}
     </div>
     <SecTitle icon="◆" sub="Suivi en temps réel">Mes courses</SecTitle>
-    {myMissions.length===0?<div style={{ textAlign:"center",padding:"40px 20px",color:"rgba(255,255,255,0.2)",fontFamily:"Georgia,serif" }}><div style={{ fontSize:32,marginBottom:12,opacity:.3 }}>★</div><div>Aucune course enregistrée</div></div>:myMissions.map(m=>{ const drv=drivers.find(d=>d.id===m.driverId); return(<Card key={m.id}><div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8 }}><div style={{ fontFamily:"Georgia,serif",fontWeight:700,fontSize:14,color:"#fff",flex:1,marginRight:10 }}>{m.title}</div><Badge status={m.status}/></div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{m.pickup}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:8 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{m.dropoff}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)" }}>{m.date} · {m.time} · <span style={{ color:G,fontWeight:700 }}>{m.price} €</span></div>{drv&&<div style={{ marginTop:10,display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:`${G}08`,borderRadius:12,border:`1px solid ${G}20` }}><Av txt={drv.avatar} size={28}/><div><div style={{ fontSize:12,fontWeight:700,color:G,fontFamily:"Georgia,serif" }}>{drv.name}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)" }}>★ {drv.rating} · {drv.vehicle} · {drv.plate}</div></div></div>}</Card>); })}
+    {myMissions.length===0?<div style={{ textAlign:"center",padding:"40px 20px",color:"rgba(255,255,255,0.2)",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}><div style={{ fontSize:32,marginBottom:12,opacity:.3 }}>★</div><div>Aucune course enregistrée</div></div>:myMissions.map(m=>{ const drv=drivers.find(d=>d.id===m.driverId); return(<Card key={m.id}><div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8 }}><div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontWeight:700,fontSize:14,color:"#fff",flex:1,marginRight:10 }}>{m.title}</div><Badge status={m.status}/></div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{m.pickup}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:8 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{m.dropoff}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)" }}>{m.date} · {m.time} · <span style={{ color:G,fontWeight:700 }}>{m.price} €</span></div>{drv&&<div style={{ marginTop:10,display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:`${G}08`,borderRadius:12,border:`1px solid ${G}20` }}><Av txt={drv.avatar} size={28}/><div><div style={{ fontSize:12,fontWeight:700,color:G,fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{drv.name}</div><div style={{ fontSize:11,color:"rgba(255,255,255,0.35)" }}>★ {drv.rating} · {drv.vehicle} · {drv.plate}</div></div></div>}</Card>); })}
   </div>;
 };
 
@@ -1648,13 +1688,26 @@ const ROLE_LABELS = { admin:"Administrateur", dispatcher:"Dispatcher", driver:"C
    APP ROOT
 ═══════════════════════════════════════════════════════════ */
 export default function App() {
-  const [screen, setScreen]   = useState("login");
-  const [user, setUser]       = useState(null);
-  const [tab, setTab]         = useState(null);
-  const [drivers]             = useState(INIT_DRIVERS);
-  const [messages, setMessages] = useState(INIT_MSGS);
-  const [toast, setToast]     = useState(null);
-  const [toastType, setToastType] = useState("success");
+  const [screen, setScreen]         = useState("login");
+  const [user, setUser]             = useState(null);
+  const [tab, setTab]               = useState(null);
+  const [drivers]                   = useState(INIT_DRIVERS);
+  const [messages, setMessages]     = useState(INIT_MSGS);
+  const [toast, setToast]           = useState(null);
+  const [toastType, setToastType]   = useState("success");
+  const [dossiersPending, setDossiersPending] = useState(0);
+
+  // Charge le nombre de dossiers en attente
+  const loadDossiersPending = async () => {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/chauffeurs?statut=eq.en_attente&select=email`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+      });
+      if (res.ok) { const data = await res.json(); setDossiersPending(data.length); }
+    } catch(e) {}
+  };
+
+  useEffect(() => { if (user?.role === "admin") loadDossiersPending(); }, [user]);
 
   // Missions depuis Supabase
   const { missions, loading: missionsLoading, loadMissions, createMission, updateMission } = useMissions();
@@ -1692,6 +1745,7 @@ export default function App() {
     if (itemId==="missions"&&role==="driver")     return missions.filter(m=>m.status==="pending"&&m.vehicle===driver?.vehicle).length;
     if (itemId==="missions"&&role==="admin")      return missions.filter(m=>m.status==="pending").length;
     if (itemId==="dispatch"&&role==="dispatcher") return missions.filter(m=>m.status==="accepted").length;
+    if (itemId==="dossiers"&&role==="admin")      return dossiersPending;
     if (itemId==="chat") return messages.filter(m=>m.to===user.avatar&&!m.read).length;
     return 0;
   };
@@ -1705,7 +1759,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ background:BG, minHeight:"100vh", fontFamily:"Georgia,serif", color:"#fff" }}>
+    <div style={{ background:BG, minHeight:"100vh", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", color:"#fff" }}>
       <div style={{ position:"fixed", inset:0, background:"radial-gradient(ellipse 70% 50% at 50% 0%, rgba(201,168,76,0.05) 0%, transparent 60%)", pointerEvents:"none", zIndex:0 }}/>
       <div style={{ position:"fixed", top:0, left:0, right:0, height:1, background:`linear-gradient(to right,transparent,${G}45,transparent)`, zIndex:20 }}/>
 
@@ -1740,7 +1794,7 @@ export default function App() {
                 style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, padding:"5px 0", background:"none", border:"none", cursor:"pointer", position:"relative", flex:1 }}>
                 {n>0 && <div style={{ position:"absolute",top:0,right:"calc(50% - 18px)",width:16,height:16,borderRadius:"50%",background:GG,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#080604" }}>{n}</div>}
                 <div style={{ fontSize:item.icon.length>2?14:18, color:active?G:"rgba(255,255,255,0.22)", transition:"all .2s", transform:active?"scale(1.1)":"scale(1)", lineHeight:1 }}>{item.icon}</div>
-                <div style={{ fontSize:9, color:active?G:"rgba(255,255,255,0.22)", fontFamily:"Georgia,serif", letterSpacing:"0.06em", textTransform:"uppercase", fontWeight:active?700:400, transition:"all .2s" }}>{item.label}</div>
+                <div style={{ fontSize:9, color:active?G:"rgba(255,255,255,0.22)", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", letterSpacing:"0.06em", textTransform:"uppercase", fontWeight:active?700:400, transition:"all .2s" }}>{item.label}</div>
                 {active&&<div style={{ width:16,height:1.5,background:GG,borderRadius:1,marginTop:1 }}/>}
               </button>
             );
@@ -1751,7 +1805,8 @@ export default function App() {
       {toast&&<Toast msg={toast} type={toastType}/>}
 
       <style>{`
-        *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;font-family:'Inter','SF Pro Display',-apple-system,sans-serif}
         ::-webkit-scrollbar{width:3px;height:3px}
         ::-webkit-scrollbar-track{background:transparent}
         ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.2);border-radius:2px}
