@@ -40,14 +40,101 @@ const INIT_DRIVERS = [
   { id:4, name:"Mehdi Tahar",    phone:"+33 6 11 22 33 44", vehicle:"Maybach", plate:"MN-012-OP", license:"PRO-E901234", licenseExp:"2029-05-01", avatar:"MT", status:"available", rating:5.0, trips:315, earnings:52100, joined:"2020-03-01", lat:48.9243, lng:2.3601 },
 ];
 
-const INIT_MISSIONS = [
-  { id:1, title:"Transfert VIP – CDG T2E → Le Bristol",   client:"M. Laurent Dupont", clientId:3,    pickup:"CDG Terminal 2E, Roissy",  dropoff:"Hôtel Le Bristol, Paris 8e",      date:"2026-06-10", time:"14:30", vehicle:"Class S", status:"pending",   driverId:null, price:220, distance:"35 km", notes:"Accueil avec panneau nominatif, 2 bagages lourds", pickupLat:49.0097, pickupLng:2.5479, dropLat:48.8716, dropLng:2.3098 },
-  { id:2, title:"Corporate – La Défense → Versailles",     client:"TechCorp SA",        clientId:4,    pickup:"Tour First, La Défense",    dropoff:"Château de Versailles",           date:"2026-06-10", time:"10:00", vehicle:"Class E", status:"accepted",  driverId:1,    price:185, distance:"28 km", notes:"3 executives, réunion commerciale",               pickupLat:48.8924, pickupLng:2.2374, dropLat:48.8048, dropLng:2.1203 },
-  { id:3, title:"Groupe 7 pers. – Paris → Deauville",      client:"Famille Moreau",     clientId:null, pickup:"16e Arr., Paris",            dropoff:"Deauville, Normandie",            date:"2026-06-11", time:"08:00", vehicle:"Class V", status:"assigned",  driverId:3,    price:480, distance:"220 km",notes:"7 passagers + bagages",                           pickupLat:48.8566, pickupLng:2.2769, dropLat:49.3547, dropLng:0.0694 },
-  { id:4, title:"Gala – Pavillon Ledoyen → Neuilly",       client:"Mme Sophie Martin",  clientId:null, pickup:"Pavillon Ledoyen",           dropoff:"Résidence privée, Neuilly",       date:"2026-05-30", time:"23:00", vehicle:"Class S", status:"completed", driverId:2,    price:125, distance:"8 km",  notes:"Attente 30min max",                               pickupLat:48.8664, pickupLng:2.3156, dropLat:48.8848, dropLng:2.2662 },
-  { id:5, title:"VVIP – Orly T4 → Four Seasons George V", client:"Prince Al-Rashid",   clientId:null, pickup:"Orly Terminal 4",            dropoff:"Four Seasons George V, Paris 8e", date:"2026-06-12", time:"19:45", vehicle:"Maybach", status:"pending",   driverId:null, price:650, distance:"40 km", notes:"VVIP – protocole diplomatique, pas de photo",     pickupLat:48.7262, pickupLng:2.3652, dropLat:48.8727, dropLng:2.3006 },
-  { id:6, title:"CDG T1 → Marriott Champs-Élysées",        client:"M. James Wilson",    clientId:null, pickup:"CDG Terminal 1",             dropoff:"Marriott Champs-Élysées",         date:"2026-06-09", time:"07:00", vehicle:"Class E", status:"completed", driverId:1,    price:160, distance:"32 km", notes:"",                                                pickupLat:49.0097, pickupLng:2.5479, dropLat:48.8698, dropLng:2.3078 },
-];
+const INIT_MISSIONS = []; // Les missions viennent maintenant de Supabase
+
+const SUPABASE_URL      = "https://oiksltqjynwfxvvldflt.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
+const SUPABASE_SVC_KEY  = "sb_secret_JZKhfoerRt5k-LPCsi2PAg_lA-GC2z3";
+
+// Hook pour charger et gérer les missions depuis Supabase
+const useMissions = () => {
+  const [missions, setMissions] = useState([]);
+  const [loading, setLoading]   = useState(true);
+
+  const loadMissions = async () => {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/missions?select=*&order=created_at.desc`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Normalise les champs Supabase vers le format de l'app
+        const normalized = data.map(m => ({
+          id:         m.id,
+          title:      m.title,
+          client:     m.client,
+          clientId:   m.client_id || null,
+          pickup:     m.pickup,
+          dropoff:    m.dropoff,
+          date:       m.date,
+          time:       m.time,
+          vehicle:    m.vehicle,
+          price:      m.price,
+          distance:   m.distance,
+          notes:      m.notes,
+          status:     m.status || "pending",
+          driverId:   m.driver_id || null,
+          driverEmail:m.driver_email || null,
+          pickupLat:  49.0097, pickupLng: 2.5479,
+          dropLat:    48.8698, dropLng:   2.3078,
+          createdAt:  m.created_at,
+        }));
+        setMissions(normalized);
+      }
+    } catch(e) { console.error("loadMissions:", e); }
+    setLoading(false);
+  };
+
+  const createMission = async (form) => {
+    const payload = {
+      title:    form.title,
+      client:   form.client,
+      pickup:   form.pickup,
+      dropoff:  form.dropoff,
+      date:     form.date,
+      time:     form.time,
+      vehicle:  form.vehicle,
+      price:    Number(form.price),
+      distance: form.distance,
+      notes:    form.notes,
+      status:   "pending",
+    };
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/missions`, {
+      method: "POST",
+      headers: {
+        "apikey":        SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type":  "application/json",
+        "Prefer":        "return=minimal",
+      },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) await loadMissions();
+    return res.ok;
+  };
+
+  const updateMission = async (id, updates) => {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_mission_status`, {
+      method: "POST",
+      headers: {
+        "apikey":        SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type":  "application/json",
+      },
+      body: JSON.stringify({
+        mission_id:        id,
+        new_status:        updates.status,
+        new_driver_email:  updates.driverEmail || null,
+      }),
+    });
+    console.log("updateMission RPC:", res.status);
+    await loadMissions();
+  };
+
+  useEffect(() => { loadMissions(); }, []);
+
+  return { missions, loading, loadMissions, createMission, updateMission, setMissions };
+};
 
 const INIT_MSGS = [
   { id:1, from:"CD", fromName:"Dispatch", to:"KB", toName:"Karim Benali", text:"Karim, le client CDG attend au niveau 2 sortie D.", time:"09:45", read:true },
@@ -1243,7 +1330,7 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
   );
 };
 
-const AdminView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, tab }) => {
+const AdminView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, tab, createMission, setToast: showToast }) => {
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter]     = useState("all");
   const [search, setSearch]     = useState("");
@@ -1258,14 +1345,17 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
   if (tab==="stats")    return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
   if (tab==="dossiers") return <DossiersView supabaseUrl={SUPABASE_URL} supabaseKey={SUPABASE_ANON_KEY}/>;
 
-  const filtered = missions.filter(m=>filter==="all"||m.status===filter).filter(m=>!search||(m.title+m.client).toLowerCase().includes(search.toLowerCase()));
-  const create = () => {
+  const filtered = missions.filter(m=>filter==="all"||m.status===filter).filter(m=>!search||(m.title+(m.client||"")).toLowerCase().includes(search.toLowerCase()));
+
+  const create = async () => {
     if (!form.title||!form.pickup||!form.dropoff||!form.date||!form.time) return;
-    const nm = {id:Date.now(),...form,price:Number(form.price),clientId:null,status:"pending",driverId:null,pickupLat:48.8566,pickupLng:2.3522,dropLat:48.8698,dropLng:2.3078,createdAt:new Date().toISOString()};
-    setMissions(p=>[nm,...p]);
-    sendPushNotif("Nouvelle mission publiée", form.title, "VTC");
-    setForm({title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",distance:"",notes:""});
-    setShowForm(false);
+    const ok = await createMission(form);
+    if (ok) {
+      sendPushNotif("Nouvelle mission publiée", form.title, "VTC");
+      setForm({title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",distance:"",notes:""});
+      setShowForm(false);
+      showToast("Mission publiée ✦");
+    }
   };
 
   const revenue=missions.filter(m=>m.status==="completed").reduce((a,m)=>a+m.price,0);
@@ -1317,15 +1407,20 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
 /* ═══════════════════════════════════════════════════════════
    VUE DISPATCHER
 ═══════════════════════════════════════════════════════════ */
-const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, setToast, tab }) => {
+const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, setToast, tab, updateMission, loadMissions }) => {
   if (tab==="map")   return <div><SecTitle sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
   if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages}/>;
   if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
 
   const accepted = missions.filter(m=>m.status==="accepted");
   const assigned  = missions.filter(m=>m.status==="assigned");
-  const sendWP    = id => { setMissions(p=>p.map(m=>m.id===id?{...m,status:"assigned"}:m)); setToast("Envoyé sur Way-Plan ✦"); };
-  const reassign  = (mid,did) => setMissions(p=>p.map(m=>m.id===mid?{...m,driverId:Number(did)}:m));
+  const sendWP = async (id) => {
+    await updateMission(id, { status:"assigned" });
+    setToast("Envoyé sur Way-Plan ✦");
+  };
+  const reassign = async (mid, did) => {
+    await updateMission(mid, { driverId: Number(did) });
+  };
 
   if (tab==="fleet") return <div>
     <SecTitle icon="▲" sub="Statut en temps réel">Flotte Continental Limousines</SecTitle>
@@ -1363,7 +1458,7 @@ const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages,
 /* ═══════════════════════════════════════════════════════════
    VUE CHAUFFEUR
 ═══════════════════════════════════════════════════════════ */
-const DriverView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, setToast, tab }) => {
+const DriverView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, setToast, tab, updateMission }) => {
   // Chauffeur depuis la liste fixe OU depuis Supabase (inscription)
   const driver = drivers.find(d=>d.id===currentUser.driverId) || {
     id:        currentUser.driverId,
@@ -1383,8 +1478,15 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, cur
   const available  = missions.filter(m=>m.status==="pending"&&m.vehicle===driver.vehicle);
   const active     = myMissions.filter(m=>["accepted","assigned"].includes(m.status));
 
-  const accept = id => { setMissions(p=>p.map(m=>m.id===id?{...m,status:"accepted",driverId:driver.id}:m)); setToast("Mission acceptée ✦"); sendPushNotif("Mission acceptée","Le dispatch a été notifié.","✅"); };
-  const refuse = id => { setMissions(p=>p.map(m=>m.id===id?{...m,status:"refused"}:m)); setToast("Mission déclinée","warn"); };
+  const accept = async (id) => {
+    await updateMission(id, { status:"accepted", driverId: driver.id });
+    setToast("Mission acceptée ✦");
+    sendPushNotif("Mission acceptée","Le dispatch a été notifié.","VTC");
+  };
+  const refuse = async (id) => {
+    await updateMission(id, { status:"refused" });
+    setToast("Mission déclinée","warn");
+  };
 
   if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages}/>;
   if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
@@ -1549,11 +1651,26 @@ export default function App() {
   const [screen, setScreen]   = useState("login");
   const [user, setUser]       = useState(null);
   const [tab, setTab]         = useState(null);
-  const [missions, setMissions] = useState(INIT_MISSIONS);
   const [drivers]             = useState(INIT_DRIVERS);
   const [messages, setMessages] = useState(INIT_MSGS);
   const [toast, setToast]     = useState(null);
   const [toastType, setToastType] = useState("success");
+
+  // Missions depuis Supabase
+  const { missions, loading: missionsLoading, loadMissions, createMission, updateMission } = useMissions();
+
+  // Wrapper setMissions pour compatibilité avec les vues existantes
+  const setMissions = async (updater) => {
+    if (typeof updater === "function") {
+      // Pour les updates de statut depuis les vues (accept/refuse)
+      const current = missions;
+      const updated = updater(current);
+      const changed = updated.find((m, i) => m.status !== current[i]?.status || m.driverId !== current[i]?.driverId);
+      if (changed) {
+        await updateMission(changed.id, { status: changed.status, driverId: changed.driverId });
+      }
+    }
+  };
 
   const showToast = (msg, type="success") => {
     setToast(msg); setToastType(type);
@@ -1580,7 +1697,7 @@ export default function App() {
   };
 
   const renderView = () => {
-    const props = { missions, setMissions, drivers, messages, setMessages, currentUser:user, setToast:showToast, tab };
+    const props = { missions, setMissions, drivers, messages, setMessages, currentUser:user, setToast:showToast, tab, createMission, updateMission, loadMissions };
     if (role==="admin")      return <AdminView      {...props}/>;
     if (role==="dispatcher") return <DispatcherView {...props}/>;
     if (role==="driver")     return <DriverView     {...props}/>;
