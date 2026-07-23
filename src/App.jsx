@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 /* ═══════════════════════════════════════════════════════════
    SUPABASE – pour connecter la vraie base de données,
    remplace ces lignes par ton URL + anon key Supabase :
-   import { createClient } from '@supabase/supabase-js'
+   import { createClient } from '@supabase/supabaase-js'
    const supabase = createClient('https://xxx.supabase.co', 'anon-key')
 ═══════════════════════════════════════════════════════════ */
 
@@ -1511,8 +1511,8 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
           </div>
         )}
       </div>
-      <Inp label="Adresse de départ" placeholder="CDG Terminal 2E, Roissy" value={form.pickup} onChange={g("pickup")}/>
-      <Inp label="Adresse d'arrivée" placeholder="Hôtel Le Bristol, Paris 8e" value={form.dropoff} onChange={g("dropoff")}/>
+      <AddressSearch label="Adresse de départ" value={form.pickup} onChange={v=>setForm(p=>({...p,pickup:v}))} placeholder="ex: CDG Terminal 2E, Roissy…"/>
+      <AddressSearch label="Adresse d'arrivée" value={form.dropoff} onChange={v=>setForm(p=>({...p,dropoff:v}))} placeholder="ex: Hôtel Le Bristol, Paris 8e…"/>
       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}><Inp label="Date" type="date" value={form.date} onChange={g("date")}/><Inp label="Heure" type="time" value={form.time} onChange={g("time")}/></div>
       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}><Inp label="Prix (€)" type="number" placeholder="0" value={form.price} onChange={g("price")}/><Inp label="Distance" placeholder="35 km" value={form.distance} onChange={g("distance")}/></div>
       <Sel label="Véhicule requis" value={form.vehicle} onChange={g("vehicle")}>{VEHICLES.map(v=><option key={v.name} value={v.name}>{v.name} — {v.cap}</option>)}</Sel>
@@ -1543,8 +1543,142 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
 };
 
 /* ═══════════════════════════════════════════════════════════
-   VUE DISPATCHER
+   COMPOSANT RECHERCHE D'ADRESSE (Nominatim / OpenStreetMap)
+   100% gratuit, sans clé API
 ═══════════════════════════════════════════════════════════ */
+const AddressSearch = ({ label, value, onChange, placeholder }) => {
+  const [query, setQuery]       = useState(value || "");
+  const [results, setResults]   = useState([]);
+  const [loading, setLoading]   = useState(false);
+  const [showList, setShowList] = useState(false);
+  const [selected, setSelected] = useState(!!value);
+  const timerRef = useRef(null);
+  const wrapRef  = useRef(null);
+
+  // Suggestions rapides pour aéroports/gares français
+  const QUICK = [
+    { label:"CDG – Terminal 1",          full:"Aéroport CDG Terminal 1, Roissy-en-France" },
+    { label:"CDG – Terminal 2A",         full:"Aéroport CDG Terminal 2A, Roissy-en-France" },
+    { label:"CDG – Terminal 2B",         full:"Aéroport CDG Terminal 2B, Roissy-en-France" },
+    { label:"CDG – Terminal 2C",         full:"Aéroport CDG Terminal 2C, Roissy-en-France" },
+    { label:"CDG – Terminal 2D",         full:"Aéroport CDG Terminal 2D, Roissy-en-France" },
+    { label:"CDG – Terminal 2E",         full:"Aéroport CDG Terminal 2E, Roissy-en-France" },
+    { label:"CDG – Terminal 2F",         full:"Aéroport CDG Terminal 2F, Roissy-en-France" },
+    { label:"CDG – Terminal 3",          full:"Aéroport CDG Terminal 3, Roissy-en-France" },
+    { label:"Orly – Terminal 1",         full:"Aéroport Paris-Orly Terminal 1" },
+    { label:"Orly – Terminal 2",         full:"Aéroport Paris-Orly Terminal 2" },
+    { label:"Orly – Terminal 3",         full:"Aéroport Paris-Orly Terminal 3" },
+    { label:"Orly – Terminal 4",         full:"Aéroport Paris-Orly Terminal 4" },
+    { label:"Gare du Nord",              full:"Gare du Nord, Paris" },
+    { label:"Gare de Lyon",              full:"Gare de Lyon, Paris" },
+    { label:"Gare Montparnasse",         full:"Gare Montparnasse, Paris" },
+    { label:"Gare Saint-Lazare",         full:"Gare Saint-Lazare, Paris" },
+    { label:"Gare de l'Est",             full:"Gare de l'Est, Paris" },
+    { label:"Gare d'Austerlitz",         full:"Gare d'Austerlitz, Paris" },
+    { label:"Le Bourget",                full:"Aéroport du Bourget, Le Bourget" },
+    { label:"Beauvais-Tillé",            full:"Aéroport Beauvais-Tillé, Beauvais" },
+  ];
+
+  const search = async (q) => {
+    if (q.length < 3) { setResults([]); return; }
+    setLoading(true);
+    try {
+      // Filtre d'abord les suggestions rapides
+      const quick = QUICK.filter(s => s.label.toLowerCase().includes(q.toLowerCase()) || s.full.toLowerCase().includes(q.toLowerCase()));
+
+      // Puis appel Nominatim pour le reste
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&countrycodes=fr,ch,be,lu,de,it,es&addressdetails=1&accept-language=fr`,
+        { headers: { "User-Agent": "ContinentalLimousines/1.0" } }
+      );
+      const data = await res.json();
+      const nominatim = data.map(r => ({
+        label: r.display_name.split(",").slice(0,3).join(", "),
+        full:  r.display_name,
+      }));
+
+      // Combine : suggestions rapides en premier
+      const combined = [...quick.slice(0,4), ...nominatim].slice(0, 8);
+      setResults(combined);
+      setShowList(true);
+    } catch(e) { console.error(e); }
+    setLoading(false);
+  };
+
+  const handleChange = (e) => {
+    const v = e.target.value;
+    setQuery(v);
+    setSelected(false);
+    onChange(v);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => search(v), 350);
+    if (v.length < 3) setShowList(false);
+  };
+
+  const handleSelect = (item) => {
+    setQuery(item.full);
+    onChange(item.full);
+    setSelected(true);
+    setShowList(false);
+    setResults([]);
+  };
+
+  // Fermer en cliquant ailleurs
+  useEffect(() => {
+    const handler = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setShowList(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={wrapRef} style={{ marginBottom:12, position:"relative" }}>
+      <div style={{ fontSize:9, color:`${G}90`, marginBottom:5, textTransform:"uppercase", letterSpacing:"0.12em" }}>{label}</div>
+      <div style={{ position:"relative" }}>
+        <input
+          value={query}
+          onChange={handleChange}
+          onFocus={() => { if (results.length > 0) setShowList(true); else if (query.length >= 3) search(query); }}
+          placeholder={placeholder}
+          style={{ width:"100%", padding:"11px 38px 11px 14px", background:"rgba(255,255,255,0.04)", border:`1px solid ${selected?G+"60":"rgba(255,255,255,0.1)"}`, borderRadius:12, color:"#fff", fontSize:14, boxSizing:"border-box", outline:"none", transition:"border-color .2s" }}
+        />
+        {/* Icône état */}
+        <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}>
+          {loading ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation:"spin 1s linear infinite" }}>
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+          ) : selected ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          )}
+        </div>
+      </div>
+
+      {/* Liste de suggestions */}
+      {showList && results.length > 0 && (
+        <div style={{ position:"absolute", top:"100%", left:0, right:0, zIndex:999, background:"#111", border:`1px solid ${G}30`, borderRadius:12, marginTop:4, overflow:"hidden", boxShadow:`0 8px 32px rgba(0,0,0,0.6)` }}>
+          {results.map((r, i) => (
+            <div key={i} onClick={() => handleSelect(r)}
+              style={{ padding:"11px 14px", cursor:"pointer", borderBottom:i<results.length-1?"1px solid rgba(255,255,255,0.05)":"none", transition:"background .15s" }}
+              onMouseEnter={e=>e.currentTarget.style.background=`${G}12`}
+              onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+            >
+              <div style={{ fontSize:13, color:"#fff", fontWeight:500 }}>{r.label}</div>
+              {r.full !== r.label && <div style={{ fontSize:11, color:"rgba(255,255,255,0.35)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{r.full}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, setToast, tab, updateMission, loadMissions }) => {
   if (tab==="map")   return <div><SecTitle sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
   if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages}/>;
