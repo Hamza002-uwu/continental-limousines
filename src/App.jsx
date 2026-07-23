@@ -1332,10 +1332,13 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
 
 const AdminView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, tab, createMission, setToast: showToast }) => {
   const [showForm, setShowForm] = useState(false);
-  const [filter, setFilter]     = useState("all");
-  const [search, setSearch]     = useState("");
+  const [filter, setFilter]       = useState("all");
+  const [search, setSearch]       = useState("");
   const [titleType, setTitleType] = useState("");
-  const [form, setForm]         = useState({ title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",distance:"",notes:"" });
+  const [clients, setClients]     = useState([]);
+  const [showSaveClient, setShowSaveClient] = useState(false);
+  const [clientSaved, setClientSaved]       = useState(false);
+  const [form, setForm] = useState({ title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",distance:"",notes:"" });
   const g = k=>e=>setForm(p=>({...p,[k]:e.target.value}));
 
   const TITLE_OPTIONS = [
@@ -1357,6 +1360,44 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
 
   const SUPABASE_URL      = "https://oiksltqjynwfxvvldflt.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
+
+  // Charger les clients depuis Supabase
+  const loadClients = async () => {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*&order=nom.asc`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+      });
+      if (res.ok) { const data = await res.json(); setClients(data); }
+    } catch(e) { console.error(e); }
+  };
+
+  // Sauvegarder un nouveau client
+  const saveClient = async () => {
+    if (!form.client) return;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
+      method: "POST",
+      headers: {
+        "apikey":        SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type":  "application/json",
+        "Prefer":        "return=minimal",
+      },
+      body: JSON.stringify({ nom: form.client }),
+    });
+    if (res.ok) {
+      await loadClients();
+      setClientSaved(true);
+      setTimeout(() => setClientSaved(false), 2000);
+    }
+  };
+
+  // Sélectionner un client existant
+  const selectClient = (nom) => {
+    setForm(p => ({...p, client: nom}));
+    setShowSaveClient(false);
+  };
+
+  useEffect(() => { loadClients(); }, []);
 
   if (tab==="map")      return <div><SecTitle sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
   if (tab==="chat")     return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages}/>;
@@ -1412,7 +1453,65 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, curr
           {form.title}
         </div>
       )}
-      <Inp label="Client" placeholder="M. Laurent Dupont" value={form.client} onChange={g("client")}/>
+      {/* Champ Client avec bouton sauvegarde + menu clients existants */}
+      <div style={{ marginBottom:12 }}>
+        <div style={{ fontSize:9,color:`${G}90`,marginBottom:5,textTransform:"uppercase",letterSpacing:"0.12em" }}>Client</div>
+
+        {/* Menu déroulant clients enregistrés */}
+        {clients.length > 0 && (
+          <div style={{ marginBottom:8 }}>
+            <select
+              onChange={e => e.target.value && selectClient(e.target.value)}
+              value=""
+              style={{ width:"100%",padding:"10px 14px",background:"#0d0d0d",border:`1px solid ${G}30`,borderRadius:12,color:G,fontSize:13,boxSizing:"border-box",outline:"none",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}
+            >
+              <option value="">— Choisir un client enregistré —</option>
+              {clients.map(c => <option key={c.id} value={c.nom}>{c.nom}</option>)}
+            </select>
+          </div>
+        )}
+
+        {/* Saisie manuelle + bouton enregistrer */}
+        <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
+          <input
+            placeholder="Nom du client"
+            value={form.client}
+            onChange={g("client")}
+            style={{ flex:1,padding:"11px 14px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,color:"#fff",fontSize:14,boxSizing:"border-box",outline:"none",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}
+          />
+          {/* Bouton enregistrer le client */}
+          {form.client && !clients.find(c=>c.nom.toLowerCase()===form.client.toLowerCase()) && (
+            <button
+              onClick={saveClient}
+              title="Enregistrer ce client"
+              style={{ width:42,height:42,flexShrink:0,borderRadius:12,background:clientSaved?`${G}30`:`${G}15`,border:`1px solid ${G}40`,color:G,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s" }}
+            >
+              {clientSaved ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/>
+                  <polyline points="7 3 7 8 15 8"/>
+                </svg>
+              )}
+            </button>
+          )}
+          {/* Indicateur client déjà enregistré */}
+          {form.client && clients.find(c=>c.nom.toLowerCase()===form.client.toLowerCase()) && (
+            <div style={{ width:42,height:42,flexShrink:0,borderRadius:12,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center" }}
+              title="Client enregistré">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+          )}
+        </div>
+        {clientSaved && <div style={{ fontSize:11,color:G,marginTop:5 }}>✦ Client enregistré dans le répertoire</div>}
+      </div>
       <Inp label="Adresse de départ" placeholder="CDG Terminal 2E, Roissy" value={form.pickup} onChange={g("pickup")}/>
       <Inp label="Adresse d'arrivée" placeholder="Hôtel Le Bristol, Paris 8e" value={form.dropoff} onChange={g("dropoff")}/>
       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}><Inp label="Date" type="date" value={form.date} onChange={g("date")}/><Inp label="Heure" type="time" value={form.time} onChange={g("time")}/></div>
