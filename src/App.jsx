@@ -544,24 +544,44 @@ const MapView = ({ mission, drivers, standalone=false }) => {
    CHAT DISPATCH ↔ CHAUFFEUR
 ═══════════════════════════════════════════════════════════ */
 const ChatView = ({ currentUser, drivers, messages, setMessages, sendMessage }) => {
-  const [activeChat, setActiveChat] = useState(null);
-  const [newMsg, setNewMsg]         = useState("");
-  const scrollRef                   = useRef(null);
+  const [activeChat, setActiveChat]       = useState(null);
+  const [newMsg, setNewMsg]               = useState("");
+  const [supaDrivers, setSupaDrivers]     = useState([]);
+  const scrollRef                         = useRef(null);
 
   if (!currentUser) return null;
 
   const myId       = currentUser.avatar || "??";
   const isDispatch = currentUser.role === "dispatcher" || currentUser.role === "admin";
 
-  // Contacts basés sur les vrais chauffeurs Supabase
-  const driverContacts = isDispatch && Array.isArray(drivers) && drivers.length > 0
-    ? drivers.map(d => ({ id: d.avatar || d.email || "??", name: d.name || "Chauffeur", avatar: d.avatar || "??", vehicle: d.vehicle || "", status: d.status || "available" }))
-    : [];
+  // Charge les chauffeurs approuvés depuis Supabase pour le chat
+  useEffect(() => {
+    if (!isDispatch) return;
+    const load = async () => {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/chauffeurs?statut=eq.approuvé&select=*`, {
+          headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSupaDrivers(data.map(d => ({
+            id:      `${(d.prenom||"?").charAt(0)}${(d.nom||"?").charAt(0)}`.toUpperCase(),
+            name:    `${d.prenom} ${d.nom}`,
+            avatar:  `${(d.prenom||"?").charAt(0)}${(d.nom||"?").charAt(0)}`.toUpperCase(),
+            vehicle: d.vehicule || "",
+            status:  "available",
+            email:   d.email,
+          })));
+        }
+      } catch(e) { console.error("loadDriversChat:", e); }
+    };
+    load();
+  }, [isDispatch]);
 
   const contacts = isDispatch
-    ? driverContacts.length > 0
-      ? driverContacts
-      : []
+    ? supaDrivers.length > 0
+      ? supaDrivers
+      : [{ id:"WAIT", name:"Aucun chauffeur approuvé", avatar:"—", vehicle:"", status:"offline", disabled:true }]
     : [{ id:"CD", name:"Centre Dispatch", avatar:"CD", vehicle:"", status:"available" }];
 
   const conversation = activeChat
