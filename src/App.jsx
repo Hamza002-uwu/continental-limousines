@@ -2218,7 +2218,7 @@ export default function App() {
   };
 
   const renderView = () => {
-    const props = { missions, setMissions, drivers, messages, setMessages, currentUser:user, setToast:showToast, tab, createMission, updateMission, loadMissions };
+    const props = { missions, setMissions, drivers, messages, setMessages, sendMessage, currentUser:user, setToast:showToast, tab, createMission, updateMission, loadMissions };
     if (role==="admin")      return <AdminView      {...props}/>;
     if (role==="dispatcher") return <DispatcherView {...props}/>;
     if (role==="driver")     return <DriverView     {...props}/>;
