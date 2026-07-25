@@ -1556,7 +1556,7 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
   );
 };
 
-const AdminView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, tab, createMission, setToast: showToast }) => {
+const AdminView = ({ missions, setMissions, drivers, messages, setMessages, sendMessage, currentUser, tab, createMission, setToast: showToast }) => {
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter]       = useState("all");
   const [search, setSearch]       = useState("");
@@ -1905,7 +1905,7 @@ const AddressSearch = ({ label, value, onChange, placeholder }) => {
 };
 
 
-const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, setToast, tab, updateMission, loadMissions }) => {
+const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages, sendMessage, currentUser, setToast, tab, updateMission, loadMissions }) => {
   if (tab==="map")   return <div><SecTitle sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
   if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages} sendMessage={sendMessage}/>;
   if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
@@ -1956,7 +1956,7 @@ const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages,
 /* ═══════════════════════════════════════════════════════════
    VUE CHAUFFEUR
 ═══════════════════════════════════════════════════════════ */
-const DriverView = ({ missions, setMissions, drivers, messages, setMessages, currentUser, setToast, tab, updateMission }) => {
+const DriverView = ({ missions, setMissions, drivers, messages, setMessages, sendMessage, currentUser, setToast, tab, updateMission }) => {
   // Chauffeur depuis la liste fixe OU depuis Supabase (inscription)
   const driver = drivers.find(d=>d.id===currentUser.driverId) || {
     id:        currentUser.driverId,
