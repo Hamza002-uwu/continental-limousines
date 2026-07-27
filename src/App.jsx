@@ -1919,7 +1919,73 @@ const AddressSearch = ({ label, value, onChange, placeholder }) => {
 };
 
 
-const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages, sendMessage, currentUser, setToast, tab, updateMission, loadMissions }) => {
+const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages, sendMessage, currentUser, setToast, tab, updateMission, loadMissions, createMission }) => {
+  const [showForm, setShowForm]   = useState(false);
+  const [titleType, setTitleType] = useState("");
+  const [clients, setClients]     = useState([]);
+  const [showSaveClient, setShowSaveClient] = useState(false);
+  const [clientSaved, setClientSaved]       = useState(false);
+  const [newClient, setNewClient] = useState({ prenom:"", nom:"", telephone:"" });
+  const [form, setForm] = useState({ title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",notes:"" });
+  const g = k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+
+  const SUPABASE_URL      = "https://oiksltqjynwfxvvldflt.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
+
+  const TITLE_OPTIONS = [
+    { value:"Transfert Aéroport",    label:"Transfert Aéroport" },
+    { value:"Transfert Gare",        label:"Transfert Gare" },
+    { value:"Mise à disposition 4h", label:"Mise à disposition 4h" },
+    { value:"Mise à disposition 8h", label:"Mise à disposition 8h" },
+    { value:"Mise à disposition 12h",label:"Mise à disposition 12h" },
+    { value:"Mise à disposition — Journée complète", label:"Mise à disposition — Journée complète" },
+    { value:"autre",                 label:"Autre (saisir manuellement)" },
+  ];
+
+  const handleTitleType = (e) => {
+    const val = e.target.value;
+    setTitleType(val);
+    if (val !== "autre") setForm(p=>({...p,title:val}));
+    else setForm(p=>({...p,title:""}));
+  };
+
+  const loadClients = async () => {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*&order=nom.asc`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+      });
+      if (res.ok) { const data = await res.json(); setClients(data); }
+    } catch(e) {}
+  };
+
+  const saveClient = async () => {
+    if (!newClient.nom) return;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
+      method:"POST", headers:{ "apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${SUPABASE_ANON_KEY}`,"Content-Type":"application/json","Prefer":"return=minimal" },
+      body: JSON.stringify({ nom:newClient.nom, prenom:newClient.prenom, telephone:newClient.telephone }),
+    });
+    if (res.ok) {
+      await loadClients();
+      setForm(p=>({...p,client:`${newClient.prenom} ${newClient.nom}`.trim()}));
+      setClientSaved(true);
+      setNewClient({prenom:"",nom:"",telephone:""});
+      setTimeout(()=>{ setClientSaved(false); setShowSaveClient(false); }, 1500);
+    }
+  };
+
+  useEffect(() => { loadClients(); }, []);
+
+  const handleCreate = async () => {
+    if (!form.title||!form.pickup||!form.dropoff||!form.date||!form.time) return;
+    const ok = await createMission({ ...form, price:Number(form.price), status:"pending", driverEmail:null });
+    if (ok) {
+      setForm({title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",notes:""});
+      setTitleType("");
+      setShowForm(false);
+      setToast("Mission publiée ✦");
+    }
+  };
+
   if (tab==="map")   return <div><SecTitle sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
   if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages} sendMessage={sendMessage}/>;
   if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
@@ -1941,7 +2007,66 @@ const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages,
 
   return <div>
     <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:20,fontWeight:700,color:"#fff",marginBottom:4 }}>Dispatch Center</div>
-    <div style={{ fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20 }}>{accepted.length} à dispatcher · {assigned.length} sur Way-Plan</div>
+    <div style={{ fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16 }}>{accepted.length} à dispatcher · {assigned.length} sur Way-Plan</div>
+
+    {/* Bouton créer mission */}
+    <Btn onClick={()=>setShowForm(!showForm)} style={{ marginBottom:14 }}>
+      {showForm?"✕  Annuler":"✦  Nouvelle mission"}
+    </Btn>
+
+    {/* Formulaire création mission */}
+    {showForm && (
+      <Card glow style={{ marginBottom:18 }}>
+        <SecTitle icon="✦">Créer une mission</SecTitle>
+        <div style={{ marginBottom:12 }}>
+          <div style={{ fontSize:9,color:`${G}90`,marginBottom:5,textTransform:"uppercase",letterSpacing:"0.12em" }}>Type de mission</div>
+          <select value={titleType} onChange={handleTitleType} style={{ width:"100%",padding:"11px 14px",background:"#0d0d0d",border:`1px solid ${titleType?"rgba(201,168,76,0.4)":"rgba(255,255,255,0.1)"}`,borderRadius:12,color:titleType?"#fff":"rgba(255,255,255,0.4)",fontSize:14,boxSizing:"border-box",outline:"none" }}>
+            <option value="">— Sélectionner un type —</option>
+            {TITLE_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
+        {titleType==="autre" && <Inp label="Intitulé personnalisé" placeholder="ex : Soirée privée…" value={form.title} onChange={g("title")}/>}
+
+        {/* Client */}
+        <div style={{ marginBottom:12 }}>
+          <div style={{ fontSize:9,color:`${G}90`,marginBottom:5,textTransform:"uppercase",letterSpacing:"0.12em" }}>Client</div>
+          <div style={{ display:"flex",gap:8 }}>
+            <input list="clients-list-d" placeholder="Rechercher ou saisir un client…" value={form.client} onChange={g("client")}
+              style={{ flex:1,padding:"11px 14px",background:"#0d0d0d",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,color:"#fff",fontSize:14,boxSizing:"border-box",outline:"none" }}/>
+            <datalist id="clients-list-d">{clients.map(c=><option key={c.id} value={`${c.prenom} ${c.nom}`.trim()}/>)}</datalist>
+            <button onClick={()=>setShowSaveClient(!showSaveClient)} style={{ width:44,height:44,flexShrink:0,borderRadius:12,background:`${G}10`,border:`1px solid ${G}40`,color:G,cursor:"pointer",fontSize:22,fontWeight:300 }}>
+              {showSaveClient?"×":"+"}
+            </button>
+          </div>
+          {showSaveClient && (
+            <div style={{ marginTop:10,padding:"14px 16px",background:"rgba(255,255,255,0.03)",border:`1px solid ${G}25`,borderRadius:14 }}>
+              <div style={{ fontSize:10,color:G,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12,fontWeight:700 }}>Nouveau client</div>
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8 }}>
+                <div><div style={{ fontSize:9,color:"rgba(255,255,255,0.4)",marginBottom:4,textTransform:"uppercase" }}>Prénom</div><input placeholder="Jean" value={newClient.prenom} onChange={e=>setNewClient(p=>({...p,prenom:e.target.value}))} style={{ width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,color:"#fff",fontSize:13,boxSizing:"border-box",outline:"none" }}/></div>
+                <div><div style={{ fontSize:9,color:"rgba(255,255,255,0.4)",marginBottom:4,textTransform:"uppercase" }}>Nom</div><input placeholder="Dupont" value={newClient.nom} onChange={e=>setNewClient(p=>({...p,nom:e.target.value}))} style={{ width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,color:"#fff",fontSize:13,boxSizing:"border-box",outline:"none" }}/></div>
+              </div>
+              <input placeholder="+33 6 xx xx xx xx" value={newClient.telephone} onChange={e=>setNewClient(p=>({...p,telephone:e.target.value}))} style={{ width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,color:"#fff",fontSize:13,boxSizing:"border-box",outline:"none",marginBottom:10 }}/>
+              <button onClick={saveClient} disabled={!newClient.nom} style={{ width:"100%",padding:"10px",borderRadius:11,background:newClient.nom?GG:"rgba(255,255,255,0.06)",border:"none",color:newClient.nom?"#0a0808":"rgba(255,255,255,0.3)",fontWeight:700,fontSize:13,cursor:newClient.nom?"pointer":"not-allowed" }}>
+                {clientSaved?"✓ Enregistré !":"Enregistrer"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <AddressSearch label="Adresse de départ" value={form.pickup} onChange={v=>setForm(p=>({...p,pickup:v}))} placeholder="ex: CDG Terminal 2E…"/>
+        <AddressSearch label="Adresse d'arrivée" value={form.dropoff} onChange={v=>setForm(p=>({...p,dropoff:v}))} placeholder="ex: Hôtel Le Bristol…"/>
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+          <Inp label="Date" type="date" value={form.date} onChange={g("date")}/>
+          <Inp label="Heure" type="time" value={form.time} onChange={g("time")}/>
+        </div>
+        <Inp label="Prix (€)" type="number" placeholder="0" value={form.price} onChange={g("price")}/>
+        <Sel label="Véhicule requis" value={form.vehicle} onChange={g("vehicle")}>
+          {VEHICLES.map(v=><option key={v.name} value={v.name}>{v.name} — {v.cap}</option>)}
+        </Sel>
+        <Inp label="Notes / Instructions" placeholder="ex : accueil avec panneau…" value={form.notes} onChange={g("notes")}/>
+        <Btn onClick={handleCreate}>Publier la mission</Btn>
+      </Card>
+    )}
     <SecTitle sub="Disponibilité en direct">Chauffeurs</SecTitle>
     <div style={{ display:"flex",gap:8,overflowX:"auto",paddingBottom:10,marginBottom:20 }}>
       {drivers.map(d=><div key={d.id} style={{ background:"rgba(255,255,255,0.025)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"14px",minWidth:130,flexShrink:0,textAlign:"center" }}>
