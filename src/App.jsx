@@ -174,6 +174,7 @@ const useDrivers = () => {
 
 /* ═══════════════════════════════════════════════════════════
    HOOK MESSAGES SUPABASE (polling toutes les 10s)
+   Utilise l'email comme identifiant unique
 ═══════════════════════════════════════════════════════════ */
 const useMessages = (currentUser) => {
   const [messages, setMessages] = useState([]);
@@ -188,9 +189,9 @@ const useMessages = (currentUser) => {
         const data = await res.json();
         setMessages(data.map(m => ({
           id:       m.id,
-          from:     m.from_avatar,
+          from:     m.from_email,
           fromName: m.from_name,
-          to:       m.to_avatar,
+          to:       m.to_email,
           toName:   m.to_name,
           text:     m.text,
           time:     m.time || new Date(m.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}),
@@ -211,25 +212,23 @@ const useMessages = (currentUser) => {
           "Prefer":        "return=minimal",
         },
         body: JSON.stringify({
-          from_avatar: msg.from,
-          from_name:   msg.fromName,
-          to_avatar:   msg.to,
-          to_name:     msg.toName,
-          text:        msg.text,
-          time:        msg.time,
-          read:        false,
+          from_email: msg.from,
+          from_name:  msg.fromName,
+          to_email:   msg.to,
+          to_name:    msg.toName,
+          text:       msg.text,
+          time:       msg.time,
+          read:       false,
         }),
       });
       await loadMessages();
-      // Notif push pour le destinataire
-      sendPushNotif(`Message de ${msg.fromName}`, msg.text, "💬");
+      sendPushNotif(`Message de ${msg.fromName}`, msg.text, "Chat");
     } catch(e) { console.error("sendMessage:", e); }
   };
 
   useEffect(() => {
     loadMessages();
-    // Polling toutes les 10 secondes pour les nouveaux messages
-    const interval = setInterval(loadMessages, 10000);
+    const interval = setInterval(loadMessages, 8000);
     return () => clearInterval(interval);
   }, [currentUser]);
 
@@ -544,59 +543,66 @@ const MapView = ({ mission, drivers, standalone=false }) => {
    CHAT DISPATCH ↔ CHAUFFEUR
 ═══════════════════════════════════════════════════════════ */
 const ChatView = ({ currentUser, drivers, messages, setMessages, sendMessage }) => {
-  const [activeChat, setActiveChat]       = useState(null);
-  const [newMsg, setNewMsg]               = useState("");
-  const [supaDrivers, setSupaDrivers]     = useState([]);
-  const scrollRef                         = useRef(null);
+  const [activeChat, setActiveChat] = useState(null); // email du contact
+  const [newMsg, setNewMsg]         = useState("");
+  const [contacts, setContacts]     = useState([]);
+  const scrollRef                   = useRef(null);
 
   if (!currentUser) return null;
 
-  const myId       = currentUser.avatar || "??";
+  const myEmail    = currentUser.email;
+  const myName     = currentUser.name;
   const isDispatch = currentUser.role === "dispatcher" || currentUser.role === "admin";
 
-  // Charge les chauffeurs approuvés depuis Supabase pour le chat
+  // Email fixe du dispatch
+  const DISPATCH_EMAIL = "dispatch@continental-limousines.fr";
+  const DISPATCH_NAME  = "Centre Dispatch";
+
+  // Charge les contacts
   useEffect(() => {
-    if (!isDispatch) return;
     const load = async () => {
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/chauffeurs?statut=eq.approuvé&select=*`, {
-          headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setSupaDrivers(data.map(d => ({
-            id:      `${(d.prenom||"?").charAt(0)}${(d.nom||"?").charAt(0)}`.toUpperCase(),
-            name:    `${d.prenom} ${d.nom}`,
-            avatar:  `${(d.prenom||"?").charAt(0)}${(d.nom||"?").charAt(0)}`.toUpperCase(),
-            vehicle: d.vehicule || "",
-            status:  "available",
-            email:   d.email,
-          })));
-        }
-      } catch(e) { console.error("loadDriversChat:", e); }
+      if (isDispatch) {
+        // Dispatch voit tous les chauffeurs approuvés
+        try {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/chauffeurs?statut=eq.approuvé&select=*`, {
+            headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setContacts(data.map(d => ({
+              email:   d.email,
+              name:    `${d.prenom} ${d.nom}`.trim(),
+              avatar:  `${(d.prenom||"?").charAt(0)}${(d.nom||"?").charAt(0)}`.toUpperCase(),
+              vehicle: d.vehicule || "",
+            })));
+          }
+        } catch(e) { console.error(e); }
+      } else {
+        // Chauffeur et client voient uniquement le dispatch
+        setContacts([{ email: DISPATCH_EMAIL, name: DISPATCH_NAME, avatar: "CD", vehicle: "" }]);
+      }
     };
     load();
   }, [isDispatch]);
 
-  const contacts = isDispatch
-    ? supaDrivers.length > 0
-      ? supaDrivers
-      : [{ id:"WAIT", name:"Aucun chauffeur approuvé", avatar:"—", vehicle:"", status:"offline", disabled:true }]
-    : [{ id:"CD", name:"Centre Dispatch", avatar:"CD", vehicle:"", status:"available" }];
-
+  // Conversation avec le contact sélectionné
   const conversation = activeChat
-    ? messages.filter(m => (m.from===myId && m.to===activeChat) || (m.from===activeChat && m.to===myId))
+    ? messages.filter(m =>
+        (m.from === myEmail && m.to === activeChat) ||
+        (m.from === activeChat && m.to === myEmail)
+      )
     : [];
 
-  const unreadCount = (contactId) => messages.filter(m => m.from===contactId && m.to===myId && !m.read).length;
+  const unreadCount = (email) =>
+    messages.filter(m => m.from === email && m.to === myEmail && !m.read).length;
 
+  // Envoyer un message
   const sendMsg = async () => {
     if (!newMsg.trim() || !activeChat) return;
-    const contact = contacts.find(c => c.id === activeChat);
+    const contact = contacts.find(c => c.email === activeChat);
     const msg = {
-      id:       Date.now(),
-      from:     myId,
-      fromName: currentUser.name,
+      from:     myEmail,
+      fromName: myName,
       to:       activeChat,
       toName:   contact?.name || activeChat,
       text:     newMsg.trim(),
@@ -604,92 +610,79 @@ const ChatView = ({ currentUser, drivers, messages, setMessages, sendMessage }) 
       read:     false,
     };
     setNewMsg("");
-    // Envoie dans Supabase si sendMessage disponible, sinon local
-    if (typeof sendMessage === "function") {
-      await sendMessage(msg);
-    } else {
-      setMessages(p => [...p, msg]);
-    }
-    sendPushNotif(`Message de ${currentUser.name}`, msg.text, "Chat");
+    if (typeof sendMessage === "function") await sendMessage(msg);
     setTimeout(() => scrollRef.current?.scrollTo(0, 9999), 100);
   };
 
-  // Marquer comme lu
-  useEffect(() => {
-    if (activeChat) setMessages(p => p.map(m => m.from===activeChat && m.to===myId ? {...m, read:true} : m));
-  }, [activeChat]);
-
   useEffect(() => { scrollRef.current?.scrollTo(0, 9999); }, [conversation.length]);
 
+  // Vue conversation ouverte
   if (activeChat) {
-    const contact = contacts.find(c => c.id === activeChat);
+    const contact = contacts.find(c => c.email === activeChat);
     return (
       <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 220px)", minHeight:400 }}>
-        {/* Header conversation */}
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
           <button onClick={()=>setActiveChat(null)} style={{ width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>←</button>
           <Av txt={contact?.avatar||"?"} size={36}/>
           <div>
-            <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", fontWeight:700, fontSize:14, color:"#fff" }}>{contact?.name}</div>
+            <div style={{ fontWeight:700, fontSize:14, color:"#fff" }}>{contact?.name || activeChat}</div>
             {contact?.vehicle && <div style={{ fontSize:11, color:`${G}80` }}>{contact.vehicle}</div>}
           </div>
-          <div style={{ marginLeft:"auto" }}><Dot on={contact?.status==="available"}/></div>
         </div>
 
-        {/* Messages */}
         <div ref={scrollRef} style={{ flex:1, overflowY:"auto", display:"flex", flexDirection:"column", gap:8, paddingBottom:8 }}>
           {conversation.length === 0 && (
-            <div style={{ textAlign:"center", color:"rgba(255,255,255,0.2)", paddingTop:40, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", fontSize:13 }}>Démarrez la conversation…</div>
+            <div style={{ textAlign:"center", color:"rgba(255,255,255,0.2)", paddingTop:40, fontSize:13 }}>Démarrez la conversation…</div>
           )}
-          {conversation.map(m => {
-            const isMine = m.from === myId;
+          {conversation.map((m, i) => {
+            const isMine = m.from === myEmail;
             return (
-              <div key={m.id} style={{ display:"flex", justifyContent:isMine?"flex-end":"flex-start" }}>
+              <div key={m.id||i} style={{ display:"flex", justifyContent:isMine?"flex-end":"flex-start" }}>
                 <div style={{ maxWidth:"78%", padding:"10px 14px", borderRadius:isMine?"16px 16px 4px 16px":"16px 16px 16px 4px", background:isMine?`${G}20`:"rgba(255,255,255,0.06)", border:`1px solid ${isMine?G+"35":"rgba(255,255,255,0.08)"}` }}>
-                  <div style={{ fontSize:13, color:"#fff", lineHeight:1.5, fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{m.text}</div>
-                  <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", marginTop:5, textAlign:"right", letterSpacing:"0.04em" }}>{m.time}{isMine && <span style={{ marginLeft:4, color:m.read?G:"rgba(255,255,255,0.3)" }}>✓✓</span>}</div>
+                  <div style={{ fontSize:13, color:"#fff", lineHeight:1.5 }}>{m.text}</div>
+                  <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", marginTop:5, textAlign:"right" }}>{m.time}</div>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Input */}
         <div style={{ display:"flex", gap:8, paddingTop:10, borderTop:"1px solid rgba(255,255,255,0.07)" }}>
-          <input
-            value={newMsg}
-            onChange={e=>setNewMsg(e.target.value)}
-            onKeyDown={e=>e.key==="Enter"&&sendMsg()}
+          <input value={newMsg} onChange={e=>setNewMsg(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMsg()}
             placeholder="Votre message…"
-            style={{ flex:1, padding:"11px 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, color:"#fff", fontSize:14, outline:"none", fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}
-          />
+            style={{ flex:1, padding:"11px 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, color:"#fff", fontSize:14, outline:"none" }}/>
           <button onClick={sendMsg} style={{ width:44,height:44,borderRadius:12,background:GG,border:"none",color:"#0a0808",fontSize:18,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center" }}>→</button>
         </div>
       </div>
     );
   }
 
+  // Vue liste des contacts
   return (
     <div>
-      <SecTitle icon="Chat" sub="Communication sécurisée">Messagerie</SecTitle>
+      <SecTitle sub="Communication sécurisée">Messagerie</SecTitle>
+      {contacts.length === 0 && (
+        <div style={{ textAlign:"center", color:"rgba(255,255,255,0.2)", padding:"40px 0", fontSize:13 }}>
+          {isDispatch ? "Aucun chauffeur approuvé pour l'instant" : "Chargement…"}
+        </div>
+      )}
       {contacts.map(c => {
-        const unread = unreadCount(c.id);
-        const lastMsg = messages.filter(m=>(m.from===c.id&&m.to===myId)||(m.from===myId&&m.to===c.id)).slice(-1)[0];
+        const unread  = unreadCount(c.email);
+        const lastMsg = messages.filter(m=>(m.from===c.email&&m.to===myEmail)||(m.from===myEmail&&m.to===c.email)).slice(-1)[0];
         return (
-          <Card key={c.id} style={{ cursor:"pointer" }} glow={unread>0}>
-            <div onClick={()=>setActiveChat(c.id)} style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <Card key={c.email} glow={unread>0}>
+            <div onClick={()=>setActiveChat(c.email)} style={{ display:"flex", alignItems:"center", gap:12, cursor:"pointer" }}>
               <div style={{ position:"relative" }}>
                 <Av txt={c.avatar} size={44}/>
                 {unread > 0 && <div style={{ position:"absolute",top:-4,right:-4,width:18,height:18,borderRadius:"50%",background:GG,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#0a0808" }}>{unread}</div>}
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif", fontWeight:700, fontSize:14, color:"#fff" }}>{c.name}</div>
+                <div style={{ fontWeight:700, fontSize:14, color:"#fff" }}>{c.name}</div>
                 {c.vehicle && <div style={{ fontSize:11, color:`${G}80`, marginTop:1 }}>{c.vehicle}</div>}
                 {lastMsg && <div style={{ fontSize:12, color:"rgba(255,255,255,0.35)", marginTop:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{lastMsg.text}</div>}
               </div>
               <div style={{ textAlign:"right" }}>
-                <Dot on={c.status==="available"}/>
-                {lastMsg && <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", marginTop:6 }}>{lastMsg.time}</div>}
+                {lastMsg && <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)" }}>{lastMsg.time}</div>}
               </div>
             </div>
           </Card>
@@ -698,6 +691,7 @@ const ChatView = ({ currentUser, drivers, messages, setMessages, sendMessage }) 
     </div>
   );
 };
+
 
 /* ═══════════════════════════════════════════════════════════
    STATISTIQUES
@@ -2233,7 +2227,7 @@ export default function App() {
     if (itemId==="missions"&&role==="admin")      return missions.filter(m=>m.status==="pending").length;
     if (itemId==="dispatch"&&role==="dispatcher") return missions.filter(m=>m.status==="accepted").length;
     if (itemId==="dossiers"&&role==="admin")      return dossiersPending;
-    if (itemId==="chat") return messages.filter(m=>m.to===user.avatar&&!m.read).length;
+    if (itemId==="chat") return messages.filter(m=>m.to===user.email&&!m.read).length;
     return 0;
   };
 
