@@ -410,12 +410,41 @@ const requestNotifPermission = async () => {
   return p === "granted";
 };
 
-const sendPushNotif = (title, body, icon="VTC") => {
-  if (Notification.permission === "granted") {
-    new Notification(`${icon} ${title}`, { body, icon:"/favicon.ico", badge:"/favicon.ico", vibrate:[200,100,200] });
+// Enregistre le Service Worker
+const registerSW = async () => {
+  if (!("serviceWorker" in navigator)) return null;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    console.log("SW registered:", reg.scope);
+    return reg;
+  } catch(e) { console.error("SW error:", e); return null; }
+};
+
+// Initialise le SW au chargement
+if (typeof window !== "undefined") {
+  window.addEventListener("load", registerSW);
+}
+
+const sendPushNotif = (title, body) => {
+  if (Notification.permission !== "granted") return;
+  // Via Service Worker — fonctionne même app en arrière-plan
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.ready.then(reg => {
+      reg.showNotification(title, {
+        body,
+        icon:    "/icon-192.png",
+        badge:   "/icon-192.png",
+        vibrate: [300, 100, 300],
+        tag:     title,
+        renotify: true,
+      });
+    }).catch(() => {
+      new Notification(title, { body, icon: "/icon-192.png" });
+    });
+  } else if (Notification.permission === "granted") {
+    new Notification(title, { body, icon: "/icon-192.png" });
   }
-  // Vibration API
-  if ("vibrate" in navigator) navigator.vibrate([200,100,200,100,200]);
+  if ("vibrate" in navigator) navigator.vibrate([300, 100, 300]);
 };
 
 /* ═══════════════════════════════════════════════════════════
