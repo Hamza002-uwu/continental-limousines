@@ -1021,6 +1021,13 @@ const RegisterScreen = ({ onBack }) => {
         throw new Error(err);
       }
 
+      // Notif push pour l'admin — nouveau dossier soumis
+      sendPushNotif(
+        "Nouveau dossier chauffeur",
+        `${form.firstName} ${form.lastName} a soumis sa demande d'inscription.`,
+        "📋"
+      );
+
       setDone(true);
     } catch(e) {
       console.error(e);
@@ -1384,11 +1391,19 @@ const DossiersView = ({ supabaseUrl, supabaseKey }) => {
   const handleApprove = async (d) => {
     await updateStatut(d.email, "approuvé");
     await sendApprovalEmail(d);
+    // Notif push pour le chauffeur
+    sendPushNotif(
+      "Dossier approuvé !",
+      `Bonjour ${d.prenom}, votre dossier Continental Limousines a été validé. Vous pouvez maintenant vous connecter.`,
+      "✅"
+    );
+    if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
     setApproved({ email: d.email, nom: `${d.prenom} ${d.nom}`, prenom: d.prenom });
   };
 
   const handleRefuse = async (d) => {
     await updateStatut(d.email, "refusé");
+    sendPushNotif("Dossier refusé", `Le dossier de ${d.prenom} ${d.nom} a été refusé.`, "❌");
   };
 
   const StatusBadgeDossier = ({ s }) => {
@@ -1637,7 +1652,7 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, send
   useEffect(() => { loadClients(); }, []);
 
   if (tab==="map")      return <div><SecTitle sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
-  if (tab==="chat")     return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages} sendMessage={sendMessage}/>;
+  
   if (tab==="stats")    return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
   if (tab==="dossiers") return <DossiersView supabaseUrl={SUPABASE_URL} supabaseKey={SUPABASE_ANON_KEY}/>;
 
@@ -1647,8 +1662,14 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, send
     if (!form.title||!form.pickup||!form.dropoff||!form.date||!form.time) return;
     const ok = await createMission(form);
     if (ok) {
-      sendPushNotif("Nouvelle mission publiée", form.title, "VTC");
-      setForm({title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",distance:"",notes:""});
+      // Notif push pour tous les chauffeurs du bon véhicule
+      sendPushNotif(
+        "Nouvelle mission disponible",
+        `${form.title} — ${form.price}€ · ${form.vehicle}`,
+        "🚗"
+      );
+      if ("vibrate" in navigator) navigator.vibrate([300, 100, 300, 100, 300]);
+      setForm({title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",notes:""});
       setTitleType("");
       setShowForm(false);
       showToast("Mission publiée ✦");
@@ -1979,6 +2000,12 @@ const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages,
     if (!form.title||!form.pickup||!form.dropoff||!form.date||!form.time) return;
     const ok = await createMission({ ...form, price:Number(form.price), status:"pending", driverEmail:null });
     if (ok) {
+      sendPushNotif(
+        "Nouvelle mission disponible",
+        `${form.title} — ${form.price}€ · ${form.vehicle}`,
+        "🚗"
+      );
+      if ("vibrate" in navigator) navigator.vibrate([300, 100, 300, 100, 300]);
       setForm({title:"",client:"",pickup:"",dropoff:"",date:"",time:"",vehicle:"Class S",price:"",notes:""});
       setTitleType("");
       setShowForm(false);
@@ -1987,7 +2014,7 @@ const DispatcherView = ({ missions, setMissions, drivers, messages, setMessages,
   };
 
   if (tab==="map")   return <div><SecTitle sub="Flotte en temps réel">Carte GPS</SecTitle><MapView mission={missions.find(m=>m.status==="accepted")} drivers={drivers} standalone/></div>;
-  if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages} sendMessage={sendMessage}/>;
+  
   if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
 
   const accepted = missions.filter(m=>m.status==="accepted");
@@ -2125,7 +2152,7 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, sen
     setToast("Mission déclinée","warn");
   };
 
-  if (tab==="chat")  return <ChatView currentUser={currentUser} drivers={drivers} messages={messages} setMessages={setMessages} sendMessage={sendMessage}/>;
+  
   if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
 
   if (tab==="map") return <div>
@@ -2134,15 +2161,7 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, sen
     {active.length>0&&<Card glow style={{ marginTop:14 }}><div style={{ fontSize:13,fontWeight:700,color:"#fff",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",marginBottom:6 }}>{active[0].title}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)" }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{active[0].pickup}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.45)",marginTop:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Arrivée</span>{active[0].dropoff}</div></Card>}
   </div>;
 
-  if (tab==="profile") return <div>
-    <Card glow style={{ marginBottom:20 }}>
-      <div style={{ display:"flex",gap:14,alignItems:"center",marginBottom:16 }}><Av txt={driver.avatar} size={58}/><div><div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:18,fontWeight:700,color:"#fff" }}>{driver.name}</div><div style={{ fontSize:12,color:G,marginTop:3 }}>★ {driver.rating} · {driver.trips} missions</div><div style={{ display:"flex",alignItems:"center",gap:6,marginTop:5 }}><Dot on={driver.status==="available"}/><span style={{ fontSize:11,color:"rgba(255,255,255,0.4)" }}>{driver.status==="available"?"Disponible":"En course"}</span></div></div></div>
-      <Divider/>
-      {[["Véhicule",driver.vehicle],["Immatriculation",driver.plate],["N° Permis",driver.license],["Exp. permis",driver.licenseExp],["Téléphone",driver.phone]].map(([k,v])=><div key={k} style={{ display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.04)" }}><span style={{ fontSize:11,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{k}</span><span style={{ fontSize:12,color:"#fff",fontWeight:600 }}>{v}</span></div>)}
-    </Card>
-    <SecTitle icon="▲">Mon véhicule</SecTitle>
-    {(()=>{ const v=VEHICLES.find(x=>x.name===driver.vehicle); return v?(<Card><div style={{ display:"flex",alignItems:"center",gap:14 }}><div style={{ width:50,height:50,borderRadius:14,background:`${G}15`,border:`1px solid ${G}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:G }}>{v.icon}</div><div><div style={{ fontWeight:700,color:"#fff",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:15 }}>{v.name}</div><div style={{ fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:3 }}>{v.desc} · {v.cap}</div></div><div style={{ marginLeft:"auto",fontSize:9,padding:"3px 8px",borderRadius:10,background:`${G}15`,color:G,border:`1px solid ${G}25`,textTransform:"uppercase",letterSpacing:"0.06em" }}>{v.tag}</div></div></Card>):null; })()}
-  </div>;
+  if (tab==="settings") return <DriverSettings driver={driver} currentUser={currentUser} setToast={setToast}/>;
 
   return <div>
     <Card glow style={{ marginBottom:20 }}>
@@ -2248,8 +2267,234 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, sen
 };
 
 /* ═══════════════════════════════════════════════════════════
-   VUE CLIENT
+   PARAMÈTRES CHAUFFEUR
 ═══════════════════════════════════════════════════════════ */
+const DriverSettings = ({ driver, currentUser, setToast }) => {
+  const [notifMissions, setNotifMissions] = useState(true);
+  const [notifDossier,  setNotifDossier]  = useState(true);
+  const [notifPush,     setNotifPush]     = useState(Notification?.permission === "granted");
+  const [saving,        setSaving]        = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [form, setForm] = useState({
+    prenom:    driver?.name?.split(" ")[0] || currentUser.name?.split(" ")[0] || "",
+    nom:       driver?.name?.split(" ").slice(1).join(" ") || currentUser.name?.split(" ").slice(1).join(" ") || "",
+    telephone: driver?.phone || "",
+    email:     currentUser.email || "",
+    vehicle:   driver?.vehicle || "",
+    plate:     driver?.plate || "",
+  });
+  const f = k => e => setForm(p=>({...p,[k]:e.target.value}));
+
+  const SUPABASE_URL      = "https://oiksltqjynwfxvvldflt.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
+
+  // Sauvegarde les infos dans Supabase
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/chauffeurs?email=eq.${currentUser.email}`, {
+        method: "PATCH",
+        headers: {
+          "apikey":        SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type":  "application/json",
+          "Prefer":        "return=minimal",
+        },
+        body: JSON.stringify({
+          prenom:    form.prenom,
+          nom:       form.nom,
+          telephone: form.telephone,
+          vehicule:  form.vehicle,
+          plaque:    form.plate,
+        }),
+      });
+      if (res.ok || res.status === 204) {
+        setToast("Informations mises à jour ✦");
+      } else {
+        setToast("Erreur lors de la mise à jour", "warn");
+      }
+    } catch(e) { setToast("Erreur de connexion", "warn"); }
+    setSaving(false);
+  };
+
+  // Active les notifications push
+  const handleEnableNotifs = async () => {
+    const granted = await requestNotifPermission();
+    setNotifPush(granted);
+    if (granted) setToast("Notifications activées ✦");
+    else setToast("Notifications refusées par le navigateur", "warn");
+  };
+
+  // Sélection photo de profil
+  const handleAvatarSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setAvatarPreview(url);
+    setToast("Photo sélectionnée — sauvegarde en cours…");
+    // En prod : uploader vers Supabase Storage
+  };
+
+  const Toggle = ({ value, onChange, label, sub }) => (
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 0", borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
+      <div>
+        <div style={{ fontSize:14, fontWeight:600, color:"#fff" }}>{label}</div>
+        {sub && <div style={{ fontSize:12, color:"rgba(255,255,255,0.35)", marginTop:3 }}>{sub}</div>}
+      </div>
+      <div onClick={()=>onChange(!value)} style={{ width:48, height:26, borderRadius:13, background:value?GG:"rgba(255,255,255,0.1)", cursor:"pointer", position:"relative", transition:"all .3s", flexShrink:0 }}>
+        <div style={{ position:"absolute", top:3, left:value?24:3, width:20, height:20, borderRadius:"50%", background:"#fff", transition:"left .3s", boxShadow:"0 2px 6px rgba(0,0,0,0.3)" }}/>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <SecTitle>Paramètres</SecTitle>
+
+      {/* Photo de profil */}
+      <Card glow style={{ marginBottom:16 }}>
+        <div style={{ fontSize:10, color:`${G}90`, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:14 }}>Photo de profil</div>
+        <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+          <div style={{ position:"relative" }}>
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="profil" style={{ width:70, height:70, borderRadius:"50%", objectFit:"cover", border:`2px solid ${G}` }}/>
+            ) : (
+              <Av txt={`${form.prenom.charAt(0)}${form.nom.charAt(0)}`.toUpperCase() || "??"} size={70}/>
+            )}
+            <label htmlFor="avatar-upload" style={{ position:"absolute", bottom:-2, right:-2, width:24, height:24, borderRadius:"50%", background:GG, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", fontSize:13, color:"#0a0808", fontWeight:700 }}>+</label>
+            <input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarSelect} style={{ display:"none" }}/>
+          </div>
+          <div>
+            <div style={{ fontSize:15, fontWeight:700, color:"#fff" }}>{form.prenom} {form.nom}</div>
+            <div style={{ fontSize:12, color:`${G}80`, marginTop:3 }}>{form.vehicle} · {form.plate}</div>
+            <div style={{ fontSize:11, color:"rgba(255,255,255,0.35)", marginTop:2 }}>{currentUser.email}</div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Informations personnelles */}
+      <Card style={{ marginBottom:16 }}>
+        <div style={{ fontSize:10, color:`${G}90`, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:14 }}>Informations personnelles</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+          <Inp label="Prénom" value={form.prenom} onChange={f("prenom")} placeholder="Jean"/>
+          <Inp label="Nom" value={form.nom} onChange={f("nom")} placeholder="Dupont"/>
+        </div>
+        <Inp label="Téléphone" type="tel" value={form.telephone} onChange={f("telephone")} placeholder="+33 6 xx xx xx xx"/>
+        <div style={{ padding:"10px 14px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, marginBottom:12 }}>
+          <div style={{ fontSize:9, color:`${G}60`, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4 }}>Email (non modifiable)</div>
+          <div style={{ fontSize:14, color:"rgba(255,255,255,0.5)" }}>{currentUser.email}</div>
+        </div>
+        <Btn onClick={handleSave} disabled={saving}>
+          {saving ? "Sauvegarde…" : "Sauvegarder les modifications"}
+        </Btn>
+      </Card>
+
+      {/* Informations véhicule */}
+      <Card style={{ marginBottom:16 }}>
+        <div style={{ fontSize:10, color:`${G}90`, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:14 }}>Mon véhicule</div>
+        <Sel label="Classe de véhicule" value={form.vehicle} onChange={f("vehicle")}>
+          {VEHICLES.map(v=><option key={v.name} value={v.name}>{v.name} — {v.desc}</option>)}
+        </Sel>
+        <Inp label="Immatriculation" value={form.plate} onChange={f("plate")} placeholder="AB-123-CD"/>
+        <Btn onClick={handleSave} disabled={saving} v="outline">
+          Mettre à jour le véhicule
+        </Btn>
+      </Card>
+
+      {/* Notifications */}
+      <Card style={{ marginBottom:16 }}>
+        <div style={{ fontSize:10, color:`${G}90`, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:14 }}>Notifications</div>
+
+        {/* Activer les notifs push */}
+        {!notifPush ? (
+          <div style={{ padding:"14px 16px", background:`${G}08`, border:`1px solid ${G}25`, borderRadius:14, marginBottom:14 }}>
+            <div style={{ fontSize:13, fontWeight:700, color:G, marginBottom:6 }}>Notifications désactivées</div>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,0.45)", marginBottom:12, lineHeight:1.6 }}>
+              Activez les notifications pour recevoir les alertes de nouvelles missions directement sur votre téléphone.
+            </div>
+            <Btn onClick={handleEnableNotifs}>Activer les notifications</Btn>
+          </div>
+        ) : (
+          <div style={{ padding:"10px 14px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, marginBottom:14, display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{ width:8, height:8, borderRadius:"50%", background:G, boxShadow:`0 0 8px ${G}` }}/>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>Notifications push activées</div>
+          </div>
+        )}
+
+        <Toggle value={notifMissions} onChange={setNotifMissions} label="Nouvelles missions" sub="Alerte quand une mission compatible est publiée"/>
+        <Toggle value={notifDossier}  onChange={setNotifDossier}  label="Statut du dossier"  sub="Confirmation d'approbation ou de refus"/>
+      </Card>
+
+      {/* Changer mot de passe */}
+      <Card style={{ marginBottom:16 }}>
+        <div style={{ fontSize:10, color:`${G}90`, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:14 }}>Sécurité</div>
+        <ChangePassword email={currentUser.email} setToast={setToast}/>
+      </Card>
+
+      {/* Version app */}
+      <div style={{ textAlign:"center", padding:"20px 0", color:"rgba(255,255,255,0.2)", fontSize:11, letterSpacing:"0.06em" }}>
+        Continental Limousines · v1.0 · Roissy CDG
+      </div>
+    </div>
+  );
+};
+
+/* ─── Changer mot de passe ─── */
+const ChangePassword = ({ email, setToast }) => {
+  const [current, setCurrent]   = useState("");
+  const [next, setNext]         = useState("");
+  const [confirm, setConfirm]   = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [showPw, setShowPw]     = useState(false);
+
+  const SUPABASE_URL      = "https://oiksltqjynwfxvvldflt.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_9sDDHh1XJwNTxHd8uIkt3A_pg_RShPX";
+  const SUPABASE_SERVICE  = "sb_secret_JZKhfoerRt5k-LPCsi2PAg_lA-GC2z3";
+
+  const handle = async () => {
+    if (!current || !next || !confirm) { setToast("Remplissez tous les champs", "warn"); return; }
+    if (next !== confirm) { setToast("Les mots de passe ne correspondent pas", "warn"); return; }
+    if (next.length < 6)  { setToast("Minimum 6 caractères", "warn"); return; }
+    setLoading(true);
+    try {
+      // Vérifie l'ancien mot de passe
+      const check = await fetch(`${SUPABASE_URL}/rest/v1/chauffeurs?email=eq.${email}&mot_de_passe=eq.${encodeURIComponent(current)}&select=email`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+      });
+      const data = await check.json();
+      if (!data.length) { setToast("Mot de passe actuel incorrect", "warn"); setLoading(false); return; }
+
+      // Met à jour
+      await fetch(`${SUPABASE_URL}/rest/v1/chauffeurs?email=eq.${email}`, {
+        method: "PATCH",
+        headers: { "apikey": SUPABASE_SERVICE, "Authorization": `Bearer ${SUPABASE_SERVICE}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        body: JSON.stringify({ mot_de_passe: next }),
+      });
+      setToast("Mot de passe mis à jour ✦");
+      setCurrent(""); setNext(""); setConfirm("");
+    } catch(e) { setToast("Erreur lors du changement", "warn"); }
+    setLoading(false);
+  };
+
+  return (
+    <div>
+      <div style={{ position:"relative", marginBottom:12 }}>
+        <div style={{ fontSize:9,color:`${G}90`,marginBottom:5,textTransform:"uppercase",letterSpacing:"0.12em" }}>Mot de passe actuel</div>
+        <input type={showPw?"text":"password"} value={current} onChange={e=>setCurrent(e.target.value)} placeholder="••••••••"
+          style={{ width:"100%",padding:"11px 44px 11px 14px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,color:"#fff",fontSize:14,boxSizing:"border-box",outline:"none" }}/>
+        <button onClick={()=>setShowPw(!showPw)} style={{ position:"absolute",right:12,top:34,background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:14 }}>{showPw?"🙈":"👁"}</button>
+      </div>
+      <Inp label="Nouveau mot de passe" type="password" value={next} onChange={e=>setNext(e.target.value)} placeholder="Minimum 6 caractères"/>
+      <Inp label="Confirmer le nouveau mot de passe" type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} placeholder="Répéter le mot de passe"
+        error={confirm && next !== confirm ? "Les mots de passe ne correspondent pas" : ""}/>
+      <Btn onClick={handle} disabled={loading} v="outline">
+        {loading ? "Mise à jour…" : "Changer le mot de passe"}
+      </Btn>
+    </div>
+  );
+};
+
+
 const ClientView = ({ missions, drivers, currentUser, tab }) => {
   const myMissions = missions.filter(m=>m.clientId===currentUser.clientId);
   const activeM    = myMissions.find(m=>["accepted","assigned"].includes(m.status));
@@ -2274,9 +2519,9 @@ const ClientView = ({ missions, drivers, currentUser, tab }) => {
    NAVIGATION PAR RÔLE
 ═══════════════════════════════════════════════════════════ */
 const NAV = {
-  admin:      [{id:"missions",icon:"◆",label:"Missions"},{id:"dossiers",icon:"◈",label:"Dossiers"},{id:"map",icon:"Carte",label:"Carte"},{id:"chat",icon:"Chat",label:"Chat"},{id:"stats",icon:"Stats",label:"Stats"}],
-  dispatcher: [{id:"dispatch",icon:"◈",label:"Dispatch"},{id:"fleet",icon:"▲",label:"Flotte"},{id:"map",icon:"Carte",label:"Carte"},{id:"chat",icon:"Chat",label:"Chat"},{id:"stats",icon:"Stats",label:"Stats"}],
-  driver:     [{id:"missions",icon:"◆",label:"Missions"},{id:"map",icon:"Carte",label:"Carte"},{id:"chat",icon:"Chat",label:"Chat"},{id:"stats",icon:"Stats",label:"Stats"},{id:"profile",icon:"●",label:"Profil"}],
+  admin:      [{id:"missions",icon:"◆",label:"Missions"},{id:"dossiers",icon:"◈",label:"Dossiers"},{id:"map",icon:"Carte",label:"Carte"},{id:"stats",icon:"Stats",label:"Stats"}],
+  dispatcher: [{id:"dispatch",icon:"◈",label:"Dispatch"},{id:"fleet",icon:"▲",label:"Flotte"},{id:"map",icon:"Carte",label:"Carte"},{id:"stats",icon:"Stats",label:"Stats"}],
+  driver:     [{id:"missions",icon:"◆",label:"Missions"},{id:"map",icon:"Carte",label:"Carte"},{id:"stats",icon:"Stats",label:"Stats"},{id:"settings",icon:"⚙",label:"Réglages"}],
   client:     [{id:"rides",icon:"★",label:"Courses"},{id:"map",icon:"Carte",label:"Ma course"},{id:"vehicles",icon:"▲",label:"Véhicules"}],
 };
 const ROLE_LABELS = { admin:"Administrateur", dispatcher:"Dispatcher", driver:"Chauffeur", client:"Client VIP" };
@@ -2352,7 +2597,7 @@ export default function App() {
     if (itemId==="missions"&&role==="admin")      return missions.filter(m=>m.status==="pending").length;
     if (itemId==="dispatch"&&role==="dispatcher") return missions.filter(m=>m.status==="accepted").length;
     if (itemId==="dossiers"&&role==="admin")      return dossiersPending;
-    if (itemId==="chat") return messages.filter(m=>m.to===user.email&&!m.read).length;
+
     return 0;
   };
 
