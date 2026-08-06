@@ -11,15 +11,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
    COMPTES (simulation – en prod : Supabase Auth)
 ═══════════════════════════════════════════════════════════ */
 const ACCOUNTS = [
-  { id:"a1", email:"admin@continental-limousines.fr",    password:"CL-Admin2024!",  role:"admin",      name:"Direction CL",     avatar:"DI" },
-  { id:"a2", email:"dispatch@continental-limousines.fr", password:"CL-Dispatch!",   role:"dispatcher", name:"Centre Dispatch",  avatar:"CD" },
-  { id:"a3", email:"ops@continental-limousines.fr",      password:"CL-Ops2024!",    role:"admin",      name:"Ops Manager",      avatar:"OM" },
-  { id:"d1", email:"k.benali@continental-limousines.fr", password:"KB-driver!",     role:"driver",     name:"Karim Benali",     avatar:"KB", driverId:1 },
-  { id:"d2", email:"s.merabt@continental-limousines.fr", password:"SM-driver!",     role:"driver",     name:"Sofiane Merabt",   avatar:"SM", driverId:2 },
-  { id:"d3", email:"y.haddad@continental-limousines.fr", password:"YH-driver!",     role:"driver",     name:"Youssef Haddad",   avatar:"YH", driverId:3 },
-  { id:"d4", email:"m.tahar@continental-limousines.fr",  password:"MT-driver!",     role:"driver",     name:"Mehdi Tahar",      avatar:"MT", driverId:4 },
-  { id:"c1", email:"l.dupont@client.fr",                 password:"Dupont2024!",    role:"client",     name:"M. Laurent Dupont",avatar:"LD", clientId:3 },
-  { id:"c2", email:"techcorp@client.fr",                 password:"TechCorp2024!",  role:"client",     name:"TechCorp SA",      avatar:"TC", clientId:4 },
+  // Seuls comptes fixes — les chauffeurs s'inscrivent via l'app
+  { id:"a1", email:"admin@continental-limousines.fr",    password:"CL-Admin2024!",  role:"admin",      name:"Direction CL",    avatar:"DI" },
+  { id:"a2", email:"dispatch@continental-limousines.fr", password:"CL-Dispatch!",   role:"dispatcher", name:"Centre Dispatch", avatar:"CD" },
 ];
 
 const VEHICLES = [
