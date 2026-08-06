@@ -1685,7 +1685,7 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, send
   if (tab==="stats")    return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
   if (tab==="dossiers") return <DossiersView supabaseUrl={SUPABASE_URL} supabaseKey={SUPABASE_ANON_KEY}/>;
 
-  const filtered = missions.filter(m=>filter==="all"||m.status===filter).filter(m=>!search||(m.title+(m.client||"")).toLowerCase().includes(search.toLowerCase()));
+  const filtered = missions.filter(m=>m.status!=="refused").filter(m=>filter==="all"||m.status===filter).filter(m=>!search||(m.title+(m.client||"")).toLowerCase().includes(search.toLowerCase()));
 
   const create = async () => {
     if (!form.title||!form.pickup||!form.dropoff||!form.date||!form.time) return;
@@ -1811,7 +1811,7 @@ const AdminView = ({ missions, setMissions, drivers, messages, setMessages, send
     </Card>}
     <Inp placeholder="🔍  Rechercher…" value={search} onChange={e=>setSearch(e.target.value)}/>
     <div style={{ display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4 }}>
-      {[["all","Toutes"],["pending","Attente"],["accepted","Acceptées"],["assigned","Way-Plan"],["completed","Terminées"],["refused","Refusées"]].map(([v,l])=>(
+      {[["all","Toutes"],["pending","Attente"],["accepted","Acceptées"],["assigned","Way-Plan"],["completed","Terminées"]].map(([v,l])=>(
         <button key={v} onClick={()=>setFilter(v)} style={{ padding:"6px 14px",borderRadius:20,border:"1px solid",borderColor:filter===v?G:"rgba(255,255,255,0.1)",background:filter===v?`${G}15`:"transparent",color:filter===v?G:"rgba(255,255,255,0.45)",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",letterSpacing:"0.04em",transition:"all .2s" }}>{l}</button>
       ))}
     </div>
@@ -2167,19 +2167,33 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, sen
     trips:     0,
     earnings:  0,
   };
-  const myMissions = missions.filter(m=>m.driverId===driver.id);
+  const myMissions = missions.filter(m=>m.driverEmail===currentUser.email || m.driverId===driver.id);
   const available  = missions.filter(m=>m.status==="pending"&&m.vehicle===driver.vehicle);
   const active     = myMissions.filter(m=>["accepted","assigned"].includes(m.status));
 
   const accept = async (id) => {
-    await updateMission(id, { status:"accepted", driverId: driver.id });
+    const mission = missions.find(m=>m.id===id);
+    await updateMission(id, { status:"accepted", driverEmail: currentUser.email });
     setToast("Mission acceptée ✦");
-    sendPushNotif("Mission acceptée","Le dispatch a été notifié.","VTC");
+    // Notif pour le chauffeur
+    sendPushNotif("Mission acceptée", "Le dispatch va vous confirmer la course.");
+    // Notif pour l'admin/dispatch (via polling ils verront le changement)
+    sendPushNotif("Mission acceptée par un chauffeur", `${driver.name} a accepté : ${mission?.title || ""}` );
   };
+
   const refuse = async (id) => {
-    await updateMission(id, { status:"refused" });
-    setToast("Mission déclinée","warn");
+    // IMPORTANT : on ne change PAS le statut global à "refused"
+    // La mission reste "pending" pour les autres chauffeurs
+    // On ajoute juste l'email du chauffeur qui refuse dans une liste locale
+    setMissionsRefused(prev => [...prev, id]);
+    setToast("Mission déclinée");
+    sendPushNotif("Mission déclinée", `${driver.name} a décliné une mission.`);
   };
+
+  // Liste locale des missions refusées par CE chauffeur
+  const [missionsRefused, setMissionsRefused] = useState([]);
+  // Missions disponibles = pending + pas dans ma liste de refus
+  const availableFiltered = available.filter(m => !missionsRefused.includes(m.id));
 
   
   if (tab==="stats") return <StatsView missions={missions} drivers={drivers} currentUser={currentUser}/>;
@@ -2197,12 +2211,12 @@ const DriverView = ({ missions, setMissions, drivers, messages, setMessages, sen
       <div style={{ display:"flex",gap:12,alignItems:"center" }}><Av txt={driver.avatar} size={50}/><div style={{ flex:1 }}><div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontSize:16,fontWeight:700,color:"#fff" }}>{driver.name}</div><div style={{ fontSize:12,color:G,marginTop:2 }}>★ {driver.rating} · {driver.vehicle} · {driver.plate}</div></div><div style={{ textAlign:"center" }}><Dot on={driver.status==="available"}/><div style={{ fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:5,textTransform:"uppercase",letterSpacing:"0.05em" }}>{driver.status==="available"?"Dispo":"En course"}</div></div></div>
     </Card>
 
-    {available.length>0&&<div style={{ marginBottom:20 }}>
+    {availableFiltered.length>0&&<div style={{ marginBottom:20 }}>
       <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:12 }}>
         <div style={{ width:8,height:8,borderRadius:"50%",background:G,boxShadow:`0 0 10px ${G}`,animation:"pulse 1.5s infinite" }}/>
         <div style={{ fontSize:11,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif" }}>{available.length} mission{available.length>1?"s":""} disponible{available.length>1?"s":""}</div>
       </div>
-      {available.map(m=><Card key={m.id} glow>
+      {availableFiltered.map(m=><Card key={m.id} glow>
         <div style={{ fontFamily:"'Inter','SF Pro Display',-apple-system,sans-serif",fontWeight:700,fontSize:15,color:"#fff",marginBottom:5 }}>{m.title}</div>
         {m.client&&<div style={{ fontSize:12,color:`${G}90`,marginBottom:8 }}>— {m.client}</div>}
         <div style={{ fontSize:12,color:"rgba(255,255,255,0.5)",marginBottom:3 }}><span style={{color:"rgba(201,168,76,0.7)",fontWeight:600,marginRight:4}}>Départ</span>{m.pickup}</div>
@@ -2575,12 +2589,27 @@ export default function App() {
   useNotifications(user, missions, drivers);
 
   // Charge le nombre de dossiers en attente
+  const prevDossierCount = useRef(0);
+
   const loadDossiersPending = async () => {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/chauffeurs?statut=eq.en_attente&select=email`, {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/chauffeurs?statut=eq.en_attente&select=email,prenom,nom`, {
         headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
       });
-      if (res.ok) { const data = await res.json(); setDossiersPending(data.length); }
+      if (res.ok) {
+        const data = await res.json();
+        const count = data.length;
+        // Notif si nouveau dossier arrivé
+        if (count > prevDossierCount.current && prevDossierCount.current >= 0 && user?.role === "admin") {
+          const nouveau = data[data.length - 1];
+          sendPushNotif(
+            "Nouveau dossier chauffeur",
+            `${nouveau?.prenom || ""} ${nouveau?.nom || ""} a soumis sa demande d'inscription.`
+          );
+        }
+        prevDossierCount.current = count;
+        setDossiersPending(count);
+      }
     } catch(e) {}
   };
 
